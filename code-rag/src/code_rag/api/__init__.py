@@ -1,0 +1,1 @@
+"""API module for exposing the RAG functionality through FastAPI."""
