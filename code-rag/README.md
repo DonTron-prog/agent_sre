@@ -1,32 +1,36 @@
-# Code RAG: Retrieval-Augmented Generation for Code Errors
+# Code RAG: Retrieval-Augmented Generation for Code Errors and SRE Incidents
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-Code RAG is a lightweight Retrieval-Augmented Generation (RAG) component designed to help developers find solutions to code errors. It leverages a vector database (Chroma) populated with error-solution pairs from the CodeInsight dataset and uses a Large Language Model (LLM) via OpenRouter to generate relevant solutions based on retrieved context.
+Code RAG is a lightweight Retrieval-Augmented Generation (RAG) component designed to help developers find solutions to code errors and SRE incidents. It leverages a vector database (Chroma) populated with error-solution pairs from the CodeInsight dataset and synthetic SRE incident documents, then uses a Large Language Model (LLM) via OpenRouter to generate relevant solutions based on retrieved context.
 
 ## Overview
 
-When faced with a cryptic error message, developers often spend significant time searching online forums like Stack Overflow. Code RAG aims to streamline this process by:
+When faced with a cryptic error message or an unfamiliar SRE incident, developers and operators often spend significant time searching online forums like Stack Overflow or internal documentation. Code RAG aims to streamline this process by:
 
-1.  **Retrieving** similar error messages and their corresponding solutions from a pre-indexed knowledge base (CodeInsight dataset stored in Chroma).
+1.  **Retrieving** similar error messages/incidents and their corresponding solutions from a pre-indexed knowledge base (CodeInsight dataset and SRE incident documents stored in Chroma).
 2.  **Augmenting** a prompt to an LLM with this retrieved context.
-3.  **Generating** a tailored solution and explanation based on the user's specific error message and the relevant context.
+3.  **Generating** a tailored solution and explanation based on the user's specific error message or incident description and the relevant context.
 
 This project provides:
 
 *   A Python library (`code_rag`) for programmatic integration.
 *   A REST API (built with FastAPI) for easy service deployment.
-*   Command-line tools for data ingestion and querying.
+*   Command-line tools for data ingestion and querying both code errors and SRE incidents.
 
 ## Features
 
-*   **Vector Store:** Uses ChromaDB for efficient similarity search of error embeddings.
+*   **Vector Store:** Uses ChromaDB for efficient similarity search of error and incident embeddings.
 *   **Embeddings:** Generates embeddings using OpenAI's `text-embedding-ada-002` model.
 *   **LLM Integration:** Connects to various LLMs via OpenRouter (defaults to `openai/gpt-3.5-turbo`).
-*   **Dataset:** Utilizes the `Nbeau/CodeInsight` dataset from Hugging Face (Stack Overflow error-solution pairs).
+*   **Datasets:**
+    * Utilizes the `Nbeau/CodeInsight` dataset from Hugging Face (Stack Overflow error-solution pairs)
+    * Generates synthetic SRE incident documents with realistic scenarios and solutions
 *   **API:** Provides a FastAPI-based REST API for querying.
-*   **CLI:** Includes scripts for data ingestion (`ingest.py`) and direct querying (`query.py`).
+*   **CLI:** Includes scripts for data ingestion and querying for both code errors and SRE incidents:
+    * Code error scripts: `ingest.py` and `query.py`
+    * SRE incident scripts: `generate_sre_documents.py`, `ingest_sre_documents.py`, `query_sre_incidents.py`, and `validate_sre_rag.py`
 *   **Configurable:** Settings managed via environment variables (`.env` file).
 
 ## Installation
@@ -104,7 +108,9 @@ OPENROUTER_API_KEY="sk-or-..."
 
 ### 1. Data Ingestion (Required First Step)
 
-Before querying, you need to populate the Chroma vector database with the CodeInsight dataset.
+Before querying, you need to populate the Chroma vector database with the necessary data.
+
+#### a) Code Error Data
 
 ```bash
 python src/scripts/ingest.py
@@ -125,9 +131,31 @@ This script will:
 *   `--force`: Force reprocessing even if processed data exists.
 *   `--log-level <LEVEL>`: Set logging level (DEBUG, INFO, WARNING, ERROR).
 
+#### b) SRE Incident Data
+
+For SRE incidents, you'll need to first generate synthetic data and then ingest it:
+
+```bash
+# Generate synthetic SRE incident documents
+python src/scripts/generate_sre_documents.py
+
+# Ingest the generated documents into Chroma
+python src/scripts/ingest_sre_documents.py
+```
+
+The generation script creates realistic SRE incident scenarios across various categories (container issues, networking, deployments, etc.) and saves them to `data/raw/sre_incidents.json`.
+
+The ingestion script processes these documents and stores them in a separate collection named `sre_incidents` in the same Chroma database.
+
+**SRE Ingestion Options:**
+*   `--input-file <path>`: Path to the input JSON file.
+*   `--batch-size <N>`: Set the batch size for embedding generation.
+*   `--collection-name <name>`: Name of the Chroma collection (default: "sre_incidents").
+*   Plus all the standard ingestion options available in the regular ingest script.
+
 ### 2. Querying
 
-#### a) Using the Command Line Interface (CLI)
+#### a) Using the Command Line Interface (CLI) for Code Errors
 
 ```bash
 python src/scripts/query.py "Your error message here"
@@ -150,6 +178,20 @@ The script will output the generated solution, the references used, and metadata
 *   `--chroma-path <path>`: Override the Chroma DB path.
 *   `--log-level <LEVEL>`: Set logging level.
 *   `--json`: Output the results in JSON format instead of formatted text.
+
+#### b) Using the Command Line Interface (CLI) for SRE Incidents
+
+```bash
+python src/scripts/query_sre_incidents.py
+```
+
+This script runs predefined test queries against the SRE incident collection. To validate the SRE RAG system more thoroughly:
+
+```bash
+python src/scripts/validate_sre_rag.py
+```
+
+The validation script performs comprehensive testing including document count verification, embedding validation, and quality metrics calculation.
 
 #### b) Using the REST API
 
@@ -246,6 +288,34 @@ for i, ref in enumerate(result.get("references", []), 1):
     # print(f"     Solution: {ref.get('solution')}")
 ```
 
+## SRE RAG Features
+
+The SRE (Site Reliability Engineering) incident RAG system extends Code RAG's capabilities to help operations teams and SREs quickly resolve infrastructure and service incidents. Key features include:
+
+* **Synthetic Data Generation**: Creates realistic SRE incident documents across categories including:
+  * Pod and container issues
+  * Networking problems
+  * Deployment failures
+  * Resource constraints
+  * API errors
+  * Database issues
+
+* **Rich Metadata**: Each incident includes contextual metadata such as:
+  * Severity level
+  * Affected services
+  * Incident category
+  * Document type (runbook, incident report, architecture doc, etc.)
+
+* **Validation Tools**: The `validate_sre_rag.py` script provides comprehensive validation including:
+  * Document count verification
+  * Document ID validation
+  * Embedding quality testing
+  * Result relevance metrics
+
+* **Test Suite**: Includes predefined test queries covering common incident types to evaluate retrieval quality.
+
+* **Integration**: Uses the same underlying RAG architecture as the code error system, allowing for a unified approach to knowledge retrieval.
+
 ## Contributing
 
 Contributions are welcome! Please refer to the `DEVELOPER_GUIDE.md` for details on the development workflow, code structure, and testing procedures.
@@ -258,6 +328,8 @@ Key areas for contribution include:
 *   Adding more sophisticated data cleaning or processing steps.
 *   Improving API features or performance.
 *   Expanding test coverage.
+*   Adding new categories of SRE incidents or enhancing the synthetic data generator.
+*   Creating universal query capability to search across both code errors and SRE incidents.
 
 ## License
 

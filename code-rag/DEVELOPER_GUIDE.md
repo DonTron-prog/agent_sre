@@ -1,6 +1,6 @@
 # Code RAG - Developer Guide
 
-This guide provides technical details for developers interested in understanding, modifying, or contributing to the Code RAG project.
+This guide provides technical details for developers interested in understanding, modifying, or contributing to the Code RAG project, including its SRE incident support capabilities.
 
 ## Table of Contents
 
@@ -8,6 +8,7 @@ This guide provides technical details for developers interested in understanding
 2.  [Architecture Overview](#2-architecture-overview)
     *   [High-Level Flow](#high-level-flow)
     *   [External Services](#external-services)
+    *   [SRE Document Pipeline](#sre-document-pipeline)
 3.  [Code Organization](#3-code-organization)
 4.  [Key Components Deep Dive](#4-key-components-deep-dive)
     *   [`Settings`](#settings)
@@ -23,18 +24,26 @@ This guide provides technical details for developers interested in understanding
     *   [Structure](#structure)
     *   [Dependency Injection](#dependency-injection)
 7.  [CLI Scripts](#7-cli-scripts)
-    *   [`ingest.py`](#ingestpy)
-    *   [`query.py`](#querypy)
+    *   [Code Error Scripts](#code-error-scripts)
+        *   [`ingest.py`](#ingestpy)
+        *   [`query.py`](#querypy)
+    *   [SRE Incident Scripts](#sre-incident-scripts)
+        *   [`generate_sre_documents.py`](#generate_sre_documentspy)
+        *   [`ingest_sre_documents.py`](#ingest_sre_documentspy)
+        *   [`query_sre_incidents.py`](#query_sre_incidentspy)
+        *   [`validate_sre_rag.py`](#validate_sre_ragpy)
 8.  [Extending the System](#8-extending-the-system)
     *   [Data Sources](#data-sources)
     *   [Embedding Models](#embedding-models)
     *   [Vector Stores](#vector-stores)
     *   [LLMs / Providers](#llms--providers)
     *   [Retrieval Strategy](#retrieval-strategy)
+    *   [SRE Incident Categories](#sre-incident-categories)
 9.  [Testing](#9-testing)
     *   [Framework](#framework)
     *   [Running Tests](#running-tests)
     *   [Coverage](#coverage)
+    *   [Validation Metrics](#validation-metrics)
 10. [Code Style & Linting](#10-code-style--linting)
 11. [Contribution Workflow](#11-contribution-workflow)
 12. [Logging](#12-logging)
@@ -47,19 +56,26 @@ This document outlines the architecture, code structure, and development practic
 
 ## 2. Architecture Overview
 
-Code RAG implements a standard Retrieval-Augmented Generation pipeline tailored for solving code errors.
+Code RAG implements a standard Retrieval-Augmented Generation pipeline tailored for solving both code errors and SRE incidents.
 
 ### High-Level Flow
 
 1.  **Ingestion:**
-    *   Load error/solution data (CodeInsight dataset via `DataLoader`).
-    *   Process and clean the data (`DataProcessor`).
-    *   Generate vector embeddings for error messages (`EmbeddingGenerator`).
-    *   Store embeddings and associated metadata (solutions) in a vector database (`ChromaVectorStore`).
+    *   **Code Error Pipeline:**
+        *   Load error/solution data (CodeInsight dataset via `DataLoader`).
+        *   Process and clean the data (`DataProcessor`).
+        *   Generate vector embeddings for error messages (`EmbeddingGenerator`).
+        *   Store embeddings and associated metadata (solutions) in a vector database (`ChromaVectorStore`).
+    *   **SRE Incident Pipeline:**
+        *   Generate or load synthetic SRE incident documents.
+        *   Process and clean the SRE data.
+        *   Generate embeddings for incident descriptions.
+        *   Store embeddings and associated metadata in a separate ChromaDB collection.
+
 2.  **Querying:**
-    *   Receive user query (error message) via API or CLI.
+    *   Receive user query (error message or incident description) via API or CLI.
     *   Generate embedding for the query (`EmbeddingGenerator`).
-    *   Retrieve semantically similar errors and their solutions from the vector database (`Retriever` using `ChromaVectorStore`).
+    *   Retrieve semantically similar entries and their solutions from the appropriate vector database collection (`Retriever` using `ChromaVectorStore`).
     *   Format retrieved data as context (`Retriever`).
     *   Construct a prompt including the original query and the retrieved context.
     *   Send the prompt to an LLM for response generation (`LLMIntegration`).
@@ -72,6 +88,23 @@ The central orchestrator for the querying flow is the `CodeRAG` class.
 *   **Hugging Face:** Hosts the `Nbeau/CodeInsight` dataset.
 *   **OpenAI:** Provides the API for generating text embeddings (default: `text-embedding-ada-002`).
 *   **OpenRouter.ai:** Acts as a gateway to various LLMs for the generation step (default: `openai/gpt-3.5-turbo`).
+
+### SRE Document Pipeline
+
+The SRE incident document pipeline differs from the code error pipeline in several ways:
+
+1. **Data Source:** Instead of using an external dataset, the SRE pipeline generates synthetic incident documents using predefined templates and categories.
+
+2. **Document Structure:**
+   * **Incidents:** Detailed descriptions of operational problems in cloud environments.
+   * **Solutions:** Corresponding resolution steps and procedures.
+   * **Metadata:** Rich metadata including severity, affected services, incident category, timestamp, etc.
+
+3. **Document Categories:** The system generates incidents across six main categories (pod/container issues, networking, deployment failures, resource constraints, API errors, and database issues).
+
+4. **Collection Separation:** SRE incident documents are stored in a separate ChromaDB collection (`sre_incidents`) to allow targeted querying.
+
+5. **Validation:** The SRE pipeline includes a dedicated validation script that tests retrieval quality and calculates metrics.
 
 ## 3. Code Organization
 
@@ -116,8 +149,12 @@ code-rag/
 │       │   ├── __init__.py
 │       │   └── helpers.py # Logging setup, etc.
 │       └── scripts/       # Command-line interface scripts
-│           ├── ingest.py  # Data ingestion CLI tool
-│           └── query.py   # Querying CLI tool
+│           ├── ingest.py  # Code error data ingestion CLI tool
+│           ├── query.py   # Code error querying CLI tool
+│           ├── generate_sre_documents.py  # SRE data generation tool
+│           ├── ingest_sre_documents.py    # SRE data ingestion tool
+│           ├── query_sre_incidents.py     # SRE querying tool
+│           └── validate_sre_rag.py        # SRE system validation tool
 ├── tests/                 # Unit and integration tests (using pytest)
 │   └── ...
 └── USER_GUIDE.md
@@ -194,20 +231,64 @@ Refer to the `USER_GUIDE.md` for a functional overview. This section focuses on 
 
 Located in `src/code_rag/scripts/`. These scripts provide command-line access to core functionalities.
 
-### `ingest.py`
+### Code Error Scripts
+
+#### `ingest.py`
 
 *   Uses `argparse` to handle command-line arguments (`--batch-size`, `--limit`, etc.).
 *   Initializes `DataLoader`, `DataProcessor`, `EmbeddingGenerator`, `ChromaVectorStore`.
 *   Orchestrates the full data ingestion pipeline: load -> process -> embed -> store in Chroma.
 *   Can optionally load previously processed data to skip initial steps.
 
-### `query.py`
+#### `query.py`
 
 *   Uses `argparse` to handle command-line arguments (`query`, `--num-results`, etc.).
 *   Initializes the main `CodeRAG` client.
 *   Takes a query string (from args or stdin).
 *   Calls `rag_client.query`.
 *   Formats the result for console output or outputs raw JSON (`--json` flag).
+
+### SRE Incident Scripts
+
+#### `generate_sre_documents.py`
+
+*   Generates synthetic SRE incident documents.
+*   Uses predefined templates and categories to create realistic scenarios.
+*   Features:
+    *   Generates 100 documents by default across six incident categories.
+    *   Creates varied document types (runbooks, incident reports, etc.).
+    *   Adds rich metadata including severity, affected services, timestamps.
+    *   Uses randomization to create unique, realistic incidents.
+    *   Saves output to a JSON file in the raw data directory.
+
+#### `ingest_sre_documents.py`
+
+*   Similar to `ingest.py` but specifically for SRE incident documents.
+*   Key differences:
+    *   Uses a different collection name (default: `sre_incidents`).
+    *   Processes SRE-specific metadata fields.
+    *   Handles the unique structure of SRE incident documents.
+*   Shares core functionality with the regular ingestion pipeline.
+
+#### `query_sre_incidents.py`
+
+*   Test script to explore and verify SRE incident retrieval capabilities.
+*   Features:
+    *   Runs predefined test queries against the SRE collection.
+    *   Displays detailed results including metadata and similarity scores.
+    *   Shows collection statistics.
+
+#### `validate_sre_rag.py`
+
+*   Comprehensive validation and testing script for the SRE RAG system.
+*   Features:
+    *   Verifies document count and integrity in ChromaDB.
+    *   Validates document IDs (uniqueness, structure).
+    *   Tests embedding quality through similarity searches.
+    *   Runs structured test queries across different incident types.
+    *   Calculates quality metrics (average similarity, query time).
+    *   Produces a validation summary with system status assessment.
+    *   Optional ingestion process execution (`--run-ingestion` flag).
 
 ## 8. Extending the System
 
@@ -217,6 +298,10 @@ The modular design allows for extensions:
 
 *   Modify `DataLoader` or create a new loader class to support different datasets or data formats.
 *   Adjust `DataProcessor` if the new data source has different fields or requires different cleaning steps. Update the `error_key` and `solution_key` logic if necessary.
+*   For adding real SRE incident data (instead of synthetic data):
+    *   Create a data loader for your incident management system.
+    *   Map incident fields to the expected structure (error, solution, metadata).
+    *   Adjust the processor for any specific cleaning or normalization steps.
 
 ### Embedding Models
 
@@ -240,6 +325,14 @@ The modular design allows for extensions:
     *   Implement different context formatting (`format_for_context`).
     *   Add a reranking step after the initial retrieval from ChromaDB to improve relevance.
     *   Experiment with different numbers of retrieved documents (`n_results`).
+    *   Consider hybrid retrieval strategies (combining multiple collections).
+
+### SRE Incident Categories
+
+*   Extend the SRE incident system with new categories:
+    *   Add new category entries to `INCIDENT_CATEGORIES` in `generate_sre_documents.py`.
+    *   Define error templates, contexts, and solution patterns.
+    *   Update the validation script's test queries to include the new categories.
 
 ## 9. Testing
 
@@ -270,6 +363,30 @@ The modular design allows for extensions:
     (Report will be in `htmlcov/index.html`)
 
 *Note: Ensure comprehensive tests are written for new features or modifications, including unit tests for individual components and integration tests for workflows like querying.*
+
+### Validation Metrics
+
+For the SRE RAG system, additional validation metrics are available through the `validate_sre_rag.py` script:
+
+*   **Document Count Verification:** Ensures all expected documents were ingested.
+*   **Document ID Validation:** Checks for uniqueness and proper formatting.
+*   **Embedding Quality:** Tests embedding generation and retrieval.
+*   **Retrieval Quality Metrics:**
+    *   **Average Similarity Score:** Measures how semantically similar retrieved documents are to test queries.
+    *   **Query Processing Time:** Measures performance of retrieval operations.
+*   **System Status Assessment:** Provides an overall evaluation based on validation results and quality metrics.
+
+To run validation tests:
+```bash
+# Basic validation
+python src/scripts/validate_sre_rag.py
+
+# Validation with regeneration and reingestion of data
+python src/scripts/validate_sre_rag.py --run-ingestion
+
+# Validation with detailed logging
+python src/scripts/validate_sre_rag.py --log-level=DEBUG
+```
 
 ## 10. Code Style & Linting
 
