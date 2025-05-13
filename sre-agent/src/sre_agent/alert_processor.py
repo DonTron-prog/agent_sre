@@ -45,23 +45,19 @@ class AlertProcessor:
         Returns:
             Dictionary containing the recommendation and related information
         """
-        print(f"DEBUG - Processing alert: {alert['id']} - {alert['type']}")
-        
         # Convert to AlertModel if it's a dict
         if isinstance(alert, dict):
             try:
                 alert_model = AlertModel(**alert)
                 alert = alert_model.to_dict()
-                print(f"DEBUG - Alert converted to model successfully")
             except Exception as e:
-                print(f"DEBUG - Error converting alert to model: {str(e)}")
+                # Silently handle conversion errors
+                pass
         
         # Get infrastructure context for this alert
         try:
             infra_context = self.infra_service.get_context_for_alert(alert)
-            print(f"DEBUG - Infra context: {infra_context}")
         except Exception as e:
-            print(f"DEBUG - Error getting infra context: {str(e)}")
             infra_context = {}
         
         # Initialize the state
@@ -79,44 +75,36 @@ class AlertProcessor:
         
         # Execute the workflow first
         try:
-            print("\nDEBUG - Executing workflow")
             final_state = await self.agent_graph.ainvoke(initial_state)
-            print(f"DEBUG - Workflow completed. Final state keys: {final_state.keys()}")
-            print(f"DEBUG - Recommendation in final state: {final_state.get('recommendation')}")
             
             # If workflow execution produced a recommendation, return it
             if final_state.get("recommendation"):
                 return final_state.get("recommendation")
-        except Exception as e:
-            print(f"DEBUG - Error in workflow execution: {str(e)}")
+        except Exception:
+            # Silently handle workflow execution errors
+            pass
         
         # If workflow execution failed or didn't produce a recommendation, use direct calls as fallback
-        print("\nDEBUG - Workflow didn't produce a recommendation, using direct calls as fallback")
         try:
             # First, perform RAG lookup
-            print("DEBUG - DIRECT CALL TO RAG LOOKUP")
             rag_result = rag_lookup(initial_state)
-            print(f"DEBUG - RAG lookup direct call result: {rag_result.get('similar_incidents')}")
             
             # Then, generate a recommendation
-            print("DEBUG - DIRECT CALL TO RECOMMENDATION GENERATION")
             rec_state = {
                 **rag_result,
                 "completed_tasks": rag_result.get("completed_tasks", []) + ["Execute task"],
                 "task_results": rag_result.get("task_results", []) + ["Task execution result"]
             }
             rec_result = generate_recommendation(rec_state)
-            print(f"DEBUG - Recommendation direct call result: {rec_result.get('recommendation')}")
             
             # Return the recommendation from direct calls
             if rec_result.get("recommendation"):
-                print("DEBUG - Using recommendation from direct call")
                 return rec_result.get("recommendation")
-        except Exception as e:
-            print(f"DEBUG - Error in direct calls: {str(e)}")
+        except Exception:
+            # Silently handle direct call errors
+            pass
         
         # If all else fails, create a basic recommendation
-        print("DEBUG - Creating basic recommendation as last resort")
         return {
             "alert_id": alert.get("id", "unknown"),
             "alert_type": alert.get("type", "unknown"),
@@ -136,3 +124,66 @@ class AlertProcessor:
             Dictionary containing the recommendation
         """
         return asyncio.run(self.process_alert(alert))
+        
+    async def process_alert_with_state(self, alert: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process an alert and return the full state including the plan.
+        
+        Args:
+            alert: The alert to process
+            
+        Returns:
+            Full state dictionary including plan and recommendation
+        """
+        # Convert to AlertModel if it's a dict
+        if isinstance(alert, dict):
+            try:
+                alert_model = AlertModel(**alert)
+                alert = alert_model.to_dict()
+            except Exception as e:
+                # Silently handle conversion errors
+                pass
+        
+        # Get infrastructure context for this alert
+        try:
+            infra_context = self.infra_service.get_context_for_alert(alert)
+        except Exception as e:
+            infra_context = {}
+        
+        # Initialize the state
+        initial_state = {
+            "alert": alert,
+            "plan": None,
+            "current_task": None,
+            "completed_tasks": [],
+            "task_results": [],
+            "similar_incidents": [],
+            "reflections": [],
+            "recommendation": None,
+            "infra_context": infra_context
+        }
+        
+        # Execute the workflow
+        try:
+            print("DEBUG: process_alert_with_state: Starting with initial state:")
+            print(f"DEBUG: Initial state reflections: {initial_state.get('reflections', [])}")
+            
+            final_state = await self.agent_graph.ainvoke(initial_state)
+            
+            print("DEBUG: process_alert_with_state: Workflow completed with final state:")
+            print(f"DEBUG: Final state completed_tasks: {final_state.get('completed_tasks', [])}")
+            print(f"DEBUG: Final state reflections: {final_state.get('reflections', [])}")
+            
+            # Make sure the final state preserves reflections
+            if not final_state.get("reflections") and initial_state.get("reflections"):
+                print("DEBUG: WARNING - Reflections were lost during processing!")
+                final_state["reflections"] = initial_state.get("reflections", [])
+                
+            return final_state
+        except Exception as e:
+            # If workflow execution failed, return the initial state with error info
+            print(f"DEBUG: Error in process_alert_with_state: {str(e)}")
+            return {
+                **initial_state,
+                "error": str(e)
+            }

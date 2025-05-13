@@ -108,8 +108,16 @@ def execute_task(state: AgentState) -> AgentState:
     # Update the state with the execution result
     task_result = result.content.strip()
     
-    return {
-        **state, 
+    print(f"DEBUG: execute_task completed, task: {current_task}")
+    print(f"DEBUG: execute_task result: {task_result[:100]}...")
+    
+    # Don't set current_task directly - let the determine_next_task function handle it
+    updated_state = {
+        **state,
         "task_results": state.get("task_results", []) + [task_result],
-        "current_task": current_task
+        "completed_tasks": state.get("completed_tasks", []) + ["Execute task"]
     }
+    
+    print(f"DEBUG: execute_task updated state - completed_tasks: {updated_state.get('completed_tasks', [])}")
+    
+    return updated_state

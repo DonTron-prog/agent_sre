@@ -127,6 +127,7 @@ class CodeRAG:
         max_tokens: int = 1024,
         system_prompt: Optional[str] = None,
         stream: bool = False,
+        pre_retrieved_docs: Optional[List[Dict]] = None,
     ) -> Dict:
         """
         Query the RAG system with an error message.
@@ -151,14 +152,21 @@ class CodeRAG:
         # Log the query
         logger.info(f"Processing query: {error_message[:100]}{'...' if len(error_message) > 100 else ''}")
         
-        # Step 1: Retrieve relevant documents
-        retrieval_result = self.retriever.retrieve_and_format(
-            query=error_message,
-            n_results=num_results,
-        )
-        
-        context = retrieval_result["context"]
-        retrieved_docs = retrieval_result["retrieved_docs"]
+        # Step 1: Retrieve relevant documents (or use pre-retrieved docs if provided)
+        if pre_retrieved_docs is not None:
+            # Use pre-retrieved documents
+            logger.info(f"Using {len(pre_retrieved_docs)} pre-retrieved documents")
+            retrieved_docs = pre_retrieved_docs
+            context = self.retriever.format_for_context(retrieved_docs)
+        else:
+            # Retrieve documents from vector store
+            retrieval_result = self.retriever.retrieve_and_format(
+                query=error_message,
+                n_results=num_results,
+            )
+            
+            context = retrieval_result["context"]
+            retrieved_docs = retrieval_result["retrieved_docs"]
         
         # Step 2: Generate solution using LLM
         llm_response = self.llm.generate_response(

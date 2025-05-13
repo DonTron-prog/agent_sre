@@ -123,7 +123,7 @@ async def main():
     processor = AlertProcessor(infra_graph)
     
     # Process each example alert
-    for i, alert in enumerate(example_alerts):
+    for i, alert in enumerate(example_alerts[:1]):
         print(f"\n\n{'='*80}")
         print(f"PROCESSING ALERT {i+1}/{len(example_alerts)}: {alert['type']}")
         print(f"{'='*80}\n")
@@ -138,15 +138,33 @@ async def main():
         
         try:
             print("Processing alert... (this may take a minute or two)")
-            # Process the alert
+            
+            # Process the alert using both methods to get both the plan and recommendation
+            state = await processor.process_alert_with_state(alert)
             recommendation = await processor.process_alert(alert)
             
-            # Debug information
-            print(f"\nDEBUG - Recommendation type: {type(recommendation)}")
-            if recommendation is None:
-                print("ERROR: Recommendation is None")
+            plan = state.get("plan", [])
+            
+            # Print the plan
+            print(f"\n{'-'*80}")
+            print("PLAN:")
+            print(f"{'-'*80}\n")
+            if plan:
+                for i, task in enumerate(plan):
+                    print(f"{i+1}. {task}")
             else:
-                print(f"DEBUG - Recommendation keys: {recommendation.keys() if hasattr(recommendation, 'keys') else 'No keys'}")
+                print("No plan available")
+            
+            # Print the reflections
+            reflections = state.get("reflections", [])
+            if reflections:
+                print(f"\n{'-'*80}")
+                print("REFLECTIONS:")
+                print(f"{'-'*80}\n")
+                for i, reflection in enumerate(reflections):
+                    print(f"Reflection on task {i+1}:")
+                    print(reflection)
+                    print()
             
             # Print the recommendation
             print(f"\n{'-'*80}")

@@ -24,9 +24,6 @@ def create_plan(state: AgentState) -> AgentState:
     Returns:
         Updated workflow state with plan
     """
-    print("DEBUG - Creating plan")
-    print(f"DEBUG - Alert: {state['alert'].get('id')} - {state['alert'].get('type')}")
-    print(f"DEBUG - Infra context: {state.get('infra_context')}")
     # Define the system prompt for plan creation
     template = """
     You are an expert SRE responsible for creating an investigation plan for alerts.
@@ -63,28 +60,19 @@ def create_plan(state: AgentState) -> AgentState:
     try:
         tasks = []
         content = result.content.strip()
-        print(f"DEBUG - LLM response: {content[:100]}...")
         
         for line in content.split("\n"):
             # Extract tasks from numbered list
             if line.strip() and line[0].isdigit() and '. ' in line:
                 tasks.append(line.split('. ', 1)[1].strip())
         
-        print(f"DEBUG - Extracted {len(tasks)} tasks: {tasks}")
-        
         # Update the state
-        updated_state = {
+        return {
             **state,
             "plan": tasks,
             "current_task": "Check similar past incidents" if tasks else None
         }
-        
-        print(f"DEBUG - Plan created successfully")
-        print(f"DEBUG - Updated state keys: {updated_state.keys()}")
-        
-        return updated_state
-    except Exception as e:
-        print(f"DEBUG - Error creating plan: {str(e)}")
+    except Exception:
         # Return a minimal valid state update with a default plan
         return {
             **state,
@@ -103,35 +91,29 @@ def determine_next_task(state: AgentState) -> str:
     Returns:
         Name of the next node to execute
     """
-    print("DEBUG - Determining next task")
-    print(f"DEBUG - Completed tasks: {state.get('completed_tasks', [])}")
-    print(f"DEBUG - Plan: {state.get('plan', [])}")
-    print(f"DEBUG - Current task value: {state.get('current_task')}")
-    
     try:
+        # Print the current state for debugging
+        print(f"DEBUG: determine_next_task: Current reflections: {state.get('reflections', [])}")
+        print(f"DEBUG: determine_next_task: Completed tasks: {state.get('completed_tasks', [])}")
+        
         if not state.get("plan") or len(state.get("completed_tasks", [])) >= len(state.get("plan", [])):
-            print("DEBUG - All tasks completed, generating recommendation")
             return "generate_recommendation"
         
         next_task_idx = len(state.get("completed_tasks", []))
         current_task = state["plan"][next_task_idx]
         
-        print(f"DEBUG - Next task index: {next_task_idx}")
-        print(f"DEBUG - Current task: {current_task}")
+        print(f"DEBUG: determine_next_task: Next task index: {next_task_idx}")
+        print(f"DEBUG: determine_next_task: Current task: {current_task}")
         
         if next_task_idx == 0:  # First task is always RAG lookup
-            print("DEBUG - First task, routing to RAG lookup")
-            # Force the current_task to match the condition in the workflow
-            state["current_task"] = "rag_lookup"
-            print(f"DEBUG - Set current_task to: {state.get('current_task')}")
+            # Set the current_task to match the condition in the workflow
+            # but don't modify the original state
             return "rag_lookup"
         
-        print("DEBUG - Routing to execute task")
-        # Force the current_task to match the condition in the workflow
-        state["current_task"] = "execute_task"
-        print(f"DEBUG - Set current_task to: {state.get('current_task')}")
+        # Set the current_task to match the condition in the workflow
+        # but don't modify the original state
         return "execute_task"
     except Exception as e:
-        print(f"DEBUG - Error determining next task: {str(e)}")
         # Default to recommendation if there's an error
+        print(f"DEBUG: determine_next_task: Error: {str(e)}")
         return "generate_recommendation"

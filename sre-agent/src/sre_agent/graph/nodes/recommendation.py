@@ -2,12 +2,12 @@
 Recommendation node for the SRE agent workflow.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-import traceback
 
 from sre_agent.models.state import AgentState
+from sre_agent.services.rag_service import RAGService
 
 
 def generate_recommendation(state: AgentState) -> AgentState:
@@ -25,8 +25,10 @@ def generate_recommendation(state: AgentState) -> AgentState:
     Returns:
         Updated workflow state with recommendation
     """
-    print("DEBUG - Generating recommendation")
-    print(f"DEBUG - State keys: {state.keys()}")
+    print("\n==== RECOMMENDATION NODE ENTERED ====")
+    print(f"DEBUG: State entering recommendation node - reflections: {state.get('reflections', [])}")
+    print(f"DEBUG: State entering recommendation node - completed_tasks: {state.get('completed_tasks', [])}")
+
     # Define the recommendation prompt
     template = """
     You are an expert SRE responsible for providing solution recommendations for alerts.
@@ -109,51 +111,21 @@ def generate_recommendation(state: AgentState) -> AgentState:
         "reflections": reflections_text
     })
     
-    print("DEBUG - Generate recommendation function called directly")
-    print(f"DEBUG - State keys: {state.keys()}")
+    recommendation = result.content.strip()
     
+    # Update the state
     try:
-        recommendation = result.content.strip()
-        
-        # Update the state
-        try:
-            print(f"DEBUG - Creating recommendation with alert ID: {state['alert'].get('id')}")
-            print(f"DEBUG - Alert type: {state['alert'].get('type')}")
-            print(f"DEBUG - Similar incidents count: {len(state.get('similar_incidents', []))}")
-            
-            updated_state = {
-                **state,
-                "recommendation": {
-                    "alert_id": state["alert"]["id"],
-                    "alert_type": state["alert"]["type"],
-                    "recommendation_text": recommendation,
-                    "similar_incidents": state.get("similar_incidents", []),
-                    "completed_tasks": state.get("completed_tasks", [])
-                }
+        return {
+            **state,
+            "recommendation": {
+                "alert_id": state["alert"]["id"],
+                "alert_type": state["alert"]["type"],
+                "recommendation_text": recommendation,
+                "similar_incidents": state.get("similar_incidents", []),
+                "completed_tasks": state.get("completed_tasks", [])
             }
-            
-            print(f"DEBUG - Recommendation created successfully")
-            print(f"DEBUG - Updated state keys: {updated_state.keys()}")
-            print(f"DEBUG - Recommendation keys: {updated_state['recommendation'].keys()}")
-            
-            return updated_state
-        except Exception as e:
-            print(f"DEBUG - Error creating recommendation: {str(e)}")
-            print(f"DEBUG - Traceback: {traceback.format_exc()}")
-            # Return state with a basic recommendation to avoid None
-            return {
-                **state,
-                "recommendation": {
-                    "alert_id": state["alert"].get("id", "unknown"),
-                    "alert_type": state["alert"].get("type", "unknown"),
-                    "recommendation_text": "Error generating recommendation: " + str(e),
-                    "similar_incidents": [],
-                    "completed_tasks": []
-                }
-            }
+        }
     except Exception as e:
-        print(f"DEBUG - Error in recommendation generation: {str(e)}")
-        print(f"DEBUG - Traceback: {traceback.format_exc()}")
         # Return state with a basic recommendation to avoid None
         return {
             **state,

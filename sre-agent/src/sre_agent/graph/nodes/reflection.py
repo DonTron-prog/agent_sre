@@ -24,6 +24,9 @@ def reflect(state: AgentState) -> AgentState:
     Returns:
         Updated workflow state with reflection
     """
+    print("DEBUG: Reflection node called!")
+    print(f"DEBUG: Current task: {state.get('current_task')}")
+    print(f"DEBUG: Task results: {state.get('task_results', [])}")
     # Get the current task and its result
     current_task = state["current_task"]
     task_result = state["task_results"][-1] if state.get("task_results") else ""
@@ -71,9 +74,24 @@ def reflect(state: AgentState) -> AgentState:
     
     reflection = result.content.strip()
     
+    print(f"DEBUG: Generated reflection: {reflection[:100]}...")
+    print(f"DEBUG: Current state reflections before update: {state.get('reflections', [])}")
+    print(f"DEBUG: Current completed_tasks before update: {state.get('completed_tasks', [])}")
+    print(f"DEBUG: Current task being reflected on: {current_task}")
+    
     # Update the state
-    return {
+    updated_state = {
         **state,
         "reflections": state.get("reflections", []) + [reflection],
-        "completed_tasks": state["completed_tasks"] + [current_task] 
+        "completed_tasks": state.get("completed_tasks", []) + [current_task]
     }
+    
+    print(f"DEBUG: Updated reflections array: {updated_state.get('reflections', [])}")
+    print(f"DEBUG: Updated completed_tasks: {updated_state.get('completed_tasks', [])}")
+    
+    # Make this a very obvious debug statement for tracking
+    print("\n==== REFLECTION ADDED TO STATE ====\n")
+    print(f"REFLECTION: {reflection[:300]}...\n")
+    print("==== END OF REFLECTION ====\n")
+    
+    return updated_state

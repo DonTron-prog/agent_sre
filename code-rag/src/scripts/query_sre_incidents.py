@@ -54,7 +54,8 @@ def main():
         "Container crashing with OOM error",
         "Kubernetes pods not starting",
         "Network latency problems",
-        "API rate limiting errors"
+        "API rate limiting errors",
+        "PodCrashLoop: Pod auth-service-xyz-pod in cluster-alpha is in CrashLoopBackOff - The pod auth-service-xyz-pod has restarted 5 times in 15 minutes"
     ]
     
     for query in test_queries:
