@@ -24,6 +24,9 @@ def create_plan(state: AgentState) -> AgentState:
     Returns:
         Updated workflow state with plan
     """
+    print("DEBUG - Creating plan")
+    print(f"DEBUG - Alert: {state['alert'].get('id')} - {state['alert'].get('type')}")
+    print(f"DEBUG - Infra context: {state.get('infra_context')}")
     # Define the system prompt for plan creation
     template = """
     You are an expert SRE responsible for creating an investigation plan for alerts.
@@ -57,18 +60,37 @@ def create_plan(state: AgentState) -> AgentState:
     })
     
     # Parse the tasks from the result
-    tasks = []
-    for line in result.content.strip().split("\n"):
-        # Extract tasks from numbered list
-        if line.strip() and line[0].isdigit() and '. ' in line:
-            tasks.append(line.split('. ', 1)[1].strip())
-    
-    # Update the state
-    return {
-        **state,
-        "plan": tasks,
-        "current_task": "Check similar past incidents" if tasks else None
-    }
+    try:
+        tasks = []
+        content = result.content.strip()
+        print(f"DEBUG - LLM response: {content[:100]}...")
+        
+        for line in content.split("\n"):
+            # Extract tasks from numbered list
+            if line.strip() and line[0].isdigit() and '. ' in line:
+                tasks.append(line.split('. ', 1)[1].strip())
+        
+        print(f"DEBUG - Extracted {len(tasks)} tasks: {tasks}")
+        
+        # Update the state
+        updated_state = {
+            **state,
+            "plan": tasks,
+            "current_task": "Check similar past incidents" if tasks else None
+        }
+        
+        print(f"DEBUG - Plan created successfully")
+        print(f"DEBUG - Updated state keys: {updated_state.keys()}")
+        
+        return updated_state
+    except Exception as e:
+        print(f"DEBUG - Error creating plan: {str(e)}")
+        # Return a minimal valid state update with a default plan
+        return {
+            **state,
+            "plan": ["Check similar past incidents"],
+            "current_task": "Check similar past incidents"
+        }
 
 
 def determine_next_task(state: AgentState) -> str:
@@ -81,13 +103,35 @@ def determine_next_task(state: AgentState) -> str:
     Returns:
         Name of the next node to execute
     """
-    if not state["plan"] or len(state["completed_tasks"]) >= len(state["plan"]):
+    print("DEBUG - Determining next task")
+    print(f"DEBUG - Completed tasks: {state.get('completed_tasks', [])}")
+    print(f"DEBUG - Plan: {state.get('plan', [])}")
+    print(f"DEBUG - Current task value: {state.get('current_task')}")
+    
+    try:
+        if not state.get("plan") or len(state.get("completed_tasks", [])) >= len(state.get("plan", [])):
+            print("DEBUG - All tasks completed, generating recommendation")
+            return "generate_recommendation"
+        
+        next_task_idx = len(state.get("completed_tasks", []))
+        current_task = state["plan"][next_task_idx]
+        
+        print(f"DEBUG - Next task index: {next_task_idx}")
+        print(f"DEBUG - Current task: {current_task}")
+        
+        if next_task_idx == 0:  # First task is always RAG lookup
+            print("DEBUG - First task, routing to RAG lookup")
+            # Force the current_task to match the condition in the workflow
+            state["current_task"] = "rag_lookup"
+            print(f"DEBUG - Set current_task to: {state.get('current_task')}")
+            return "rag_lookup"
+        
+        print("DEBUG - Routing to execute task")
+        # Force the current_task to match the condition in the workflow
+        state["current_task"] = "execute_task"
+        print(f"DEBUG - Set current_task to: {state.get('current_task')}")
+        return "execute_task"
+    except Exception as e:
+        print(f"DEBUG - Error determining next task: {str(e)}")
+        # Default to recommendation if there's an error
         return "generate_recommendation"
-    
-    next_task_idx = len(state["completed_tasks"])
-    current_task = state["plan"][next_task_idx]
-    
-    if next_task_idx == 0:  # First task is always RAG lookup
-        return "rag_lookup"
-    
-    return "execute_task"

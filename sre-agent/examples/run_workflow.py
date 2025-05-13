@@ -141,19 +141,29 @@ async def main():
             # Process the alert
             recommendation = await processor.process_alert(alert)
             
+            # Debug information
+            print(f"\nDEBUG - Recommendation type: {type(recommendation)}")
+            if recommendation is None:
+                print("ERROR: Recommendation is None")
+            else:
+                print(f"DEBUG - Recommendation keys: {recommendation.keys() if hasattr(recommendation, 'keys') else 'No keys'}")
+            
             # Print the recommendation
             print(f"\n{'-'*80}")
             print("RECOMMENDATION:")
             print(f"{'-'*80}\n")
-            print(recommendation["recommendation_text"])
+            if recommendation is not None:
+                print(recommendation.get("recommendation_text", "No recommendation text available"))
+            else:
+                print("No recommendation available")
             
             # Print similar incidents
-            if recommendation["similar_incidents"]:
+            if recommendation is not None and recommendation.get("similar_incidents"):
                 print(f"\n{'-'*80}")
-                print(f"SIMILAR INCIDENTS ({len(recommendation['similar_incidents'])}):")
+                print(f"SIMILAR INCIDENTS ({len(recommendation.get('similar_incidents', []))}):")
                 print(f"{'-'*80}\n")
                 
-                for i, incident in enumerate(recommendation["similar_incidents"]):
+                for i, incident in enumerate(recommendation.get("similar_incidents", [])):
                     print(f"Incident {i+1} (Similarity: {incident.get('similarity_score', 0.0):.2f}):")
                     print(f"Error: {incident.get('error', '')}")
                     print(f"Solution: {incident.get('solution', '')}")
