@@ -1,0 +1,1502 @@
+[
+  {
+    "error": "Cluster exceeded {resource_type} quota in namespace staging following inadequate cleanup of temporary resources",
+    "solution": "Configured pod disruption budget to ensure critical services maintain minimum availability.",
+    "metadata": {
+      "incident_id": "INC-40107",
+      "severity": "P3",
+      "category": "Resource Constraints",
+      "incident_date": "2025-01-11 13:01:59",
+      "resolution_date": "2025-01-11 16:34:59",
+      "resolution_time_minutes": 134,
+      "document_type": "runbook",
+      "affected_services": "order-processor, shipping-service, cart-service",
+      "tags": "resource_constraints, networking, microservices, security"
+    }
+  },
+  {
+    "error": "Post-deployment tests for search-service failed with 345 errors during infrastructure migration",
+    "solution": "Fixed dependency order in Helm chart to ensure database migrations run before application pods.",
+    "metadata": {
+      "incident_id": "INC-88761",
+      "severity": "P2",
+      "category": "Deployment Failures",
+      "incident_date": "2025-01-18 13:01:59",
+      "resolution_date": "2025-01-18 15:48:59",
+      "resolution_time_minutes": 161,
+      "document_type": "runbook",
+      "affected_services": "notification-service, configuration-service, notification-service",
+      "tags": "deployment_failures, cloud, monitoring, security"
+    }
+  },
+  {
+    "error": "ETCd database size grown to 24GB causing performance degradation following log level change to DEBUG",
+    "solution": "Added pod anti-affinity rules to distribute resource-intensive workloads across nodes.",
+    "metadata": {
+      "incident_id": "INC-83993",
+      "severity": "P3",
+      "category": "Resource Constraints",
+      "incident_date": "2025-04-16 13:01:59",
+      "resolution_date": "2025-04-16 13:13:59",
+      "resolution_time_minutes": 222,
+      "document_type": "incident_report",
+      "affected_services": "reporting-service, configuration-service, payment-gateway",
+      "tags": "resource_constraints, monitoring, security, cloud"
+    }
+  },
+  {
+    "error": "Network policy database-access blocking essential traffic to logging-service after security group changes",
+    "solution": "Optimized MTU settings to prevent packet fragmentation issues.",
+    "metadata": {
+      "incident_id": "INC-72282",
+      "severity": "P4",
+      "category": "Networking Issues",
+      "incident_date": "2024-09-18 13:01:59",
+      "resolution_date": "2024-09-18 14:15:59",
+      "resolution_time_minutes": 234,
+      "document_type": "architecture_doc",
+      "affected_services": "billing-service",
+      "tags": "networking_issues, performance, security, kubernetes"
+    }
+  },
+  {
+    "error": "Database products-db connection pool exhausted with 79 active connections after query pattern change",
+    "solution": "Updated database instance size from r5.xlarge to c5.2xlarge to accommodate increased workload.",
+    "metadata": {
+      "incident_id": "INC-71548",
+      "severity": "P1",
+      "category": "Database Issues",
+      "incident_date": "2025-01-30 13:01:59",
+      "resolution_date": "2025-01-30 14:36:59",
+      "resolution_time_minutes": 202,
+      "document_type": "runbook",
+      "affected_services": "configuration-service, notification-service, configuration-service",
+      "tags": "database_issues, database, cloud"
+    }
+  },
+  {
+    "error": "Pod logging-service-9854 in namespace production has ImagePullBackOff status following security patch updates",
+    "solution": "Added readiness probe with appropriate timing values to prevent premature traffic routing.",
+    "metadata": {
+      "incident_id": "INC-14926",
+      "severity": "P4",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-12-21 13:01:59",
+      "resolution_date": "2024-12-21 16:21:59",
+      "resolution_time_minutes": 178,
+      "document_type": "incident_report",
+      "affected_services": "logging-service, cart-service",
+      "tags": "pod_container_issues, monitoring, database"
+    }
+  },
+  {
+    "error": "Prometheus storage utilization at 87%, retention period reduced automatically after enabling detailed metrics collection",
+    "solution": "Configured pod disruption budget to ensure critical services maintain minimum availability.",
+    "metadata": {
+      "incident_id": "INC-10588",
+      "severity": "P3",
+      "category": "Resource Constraints",
+      "incident_date": "2025-01-12 13:01:59",
+      "resolution_date": "2025-01-12 15:32:59",
+      "resolution_time_minutes": 49,
+      "document_type": "runbook",
+      "affected_services": "authentication-service",
+      "tags": "resource_constraints, microservices, database, cloud"
+    }
+  },
+  {
+    "error": "Prometheus storage utilization at 83%, retention period reduced automatically following log level change to DEBUG",
+    "solution": "Added pod anti-affinity rules to distribute resource-intensive workloads across nodes.",
+    "metadata": {
+      "incident_id": "INC-74031",
+      "severity": "P2",
+      "category": "Resource Constraints",
+      "incident_date": "2024-10-05 13:01:59",
+      "resolution_date": "2024-10-05 13:48:59",
+      "resolution_time_minutes": 151,
+      "document_type": "architecture_doc",
+      "affected_services": "recommendation-engine, api-gateway",
+      "tags": "resource_constraints, networking, kubernetes, database"
+    }
+  },
+  {
+    "error": "Init container failing in pod recommendation-engine-5861 with exit code 1 after cluster upgrade",
+    "solution": "Updated init container script to handle permission issues correctly.",
+    "metadata": {
+      "incident_id": "INC-67551",
+      "severity": "P4",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-09-18 13:01:59",
+      "resolution_date": "2024-09-18 16:40:59",
+      "resolution_time_minutes": 155,
+      "document_type": "runbook",
+      "affected_services": "product-catalog, messaging-service",
+      "tags": "pod_container_issues, kubernetes, cloud, networking"
+    }
+  },
+  {
+    "error": "Rate limiting triggered on configuration-service API, rejecting 87% of requests during distributed tracing implementation",
+    "solution": "Added correlation IDs to all requests for improved traceability across services.",
+    "metadata": {
+      "incident_id": "INC-74827",
+      "severity": "P3",
+      "category": "Api Errors",
+      "incident_date": "2025-01-01 13:01:59",
+      "resolution_date": "2025-01-01 16:25:59",
+      "resolution_time_minutes": 180,
+      "document_type": "runbook",
+      "affected_services": "payment-gateway",
+      "tags": "api_errors, networking, security"
+    }
+  },
+  {
+    "error": "Replication lag on inventory-db read replica increased to 206 seconds following application release",
+    "solution": "Implemented query timeout handling to prevent long-running queries from affecting other operations.",
+    "metadata": {
+      "incident_id": "INC-57430",
+      "severity": "P4",
+      "category": "Database Issues",
+      "incident_date": "2025-01-12 13:01:59",
+      "resolution_date": "2025-01-12 14:35:59",
+      "resolution_time_minutes": 82,
+      "document_type": "chat_log",
+      "affected_services": "logging-service",
+      "tags": "database_issues, database, database"
+    }
+  },
+  {
+    "error": "Node worker-node-2 reporting disk pressure with 7GB remaining during heavy reporting workload",
+    "solution": "Implemented rate limiting on API to prevent client from overwhelming the service.",
+    "metadata": {
+      "incident_id": "INC-53780",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2024-12-14 13:01:59",
+      "resolution_date": "2024-12-14 16:10:59",
+      "resolution_time_minutes": 36,
+      "document_type": "runbook",
+      "affected_services": "billing-service",
+      "tags": "resource_constraints, networking, database"
+    }
+  },
+  {
+    "error": "Persistent volumes in namespace data approaching capacity at 89% during month-end processing",
+    "solution": "Scheduled batch processing jobs to run during off-peak hours.",
+    "metadata": {
+      "incident_id": "INC-21627",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2025-04-11 13:01:59",
+      "resolution_date": "2025-04-11 13:26:59",
+      "resolution_time_minutes": 46,
+      "document_type": "incident_report",
+      "affected_services": "billing-service",
+      "tags": "resource_constraints, cloud"
+    }
+  },
+  {
+    "error": "Deployment shipping-service failed validation checks during manual hotfix deployment",
+    "solution": "Added missing service account permissions required by the application.",
+    "metadata": {
+      "incident_id": "INC-82762",
+      "severity": "P3",
+      "category": "Deployment Failures",
+      "incident_date": "2025-03-13 13:01:59",
+      "resolution_date": "2025-03-13 15:37:59",
+      "resolution_time_minutes": 119,
+      "document_type": "runbook",
+      "affected_services": "shipping-service, user-service, notification-service",
+      "tags": "deployment_failures, microservices, monitoring"
+    }
+  },
+  {
+    "error": "Network policy default-deny blocking essential traffic to notification-service during high traffic periods",
+    "solution": "Increased TCP keepalive settings to prevent connection termination during idle periods.",
+    "metadata": {
+      "incident_id": "INC-97025",
+      "severity": "P4",
+      "category": "Networking Issues",
+      "incident_date": "2025-03-06 13:01:59",
+      "resolution_date": "2025-03-06 14:32:59",
+      "resolution_time_minutes": 59,
+      "document_type": "runbook",
+      "affected_services": "order-processor, user-service",
+      "tags": "networking_issues, networking, networking"
+    }
+  },
+  {
+    "error": "Replication lag on products-db read replica increased to 207 seconds after query pattern change",
+    "solution": "Added read replicas to distribute read queries and reduce primary database load.",
+    "metadata": {
+      "incident_id": "INC-46949",
+      "severity": "P4",
+      "category": "Database Issues",
+      "incident_date": "2024-09-30 13:01:59",
+      "resolution_date": "2024-09-30 16:55:59",
+      "resolution_time_minutes": 124,
+      "document_type": "incident_report",
+      "affected_services": "notification-service, authentication-service",
+      "tags": "database_issues, performance, performance"
+    }
+  },
+  {
+    "error": "ETCd database size grown to 11GB causing performance degradation during unexpected traffic spike",
+    "solution": "Optimized query patterns to reduce database CPU usage by 48%.",
+    "metadata": {
+      "incident_id": "INC-46755",
+      "severity": "P2",
+      "category": "Resource Constraints",
+      "incident_date": "2025-05-01 13:01:59",
+      "resolution_date": "2025-05-01 16:16:59",
+      "resolution_time_minutes": 90,
+      "document_type": "incident_report",
+      "affected_services": "payment-gateway, shipping-service",
+      "tags": "resource_constraints, database, microservices"
+    }
+  },
+  {
+    "error": "Increased error rate of 38% for database operations from service order-processor after query pattern change",
+    "solution": "Updated database configuration to increase max_connections from 372 to 797.",
+    "metadata": {
+      "incident_id": "INC-19518",
+      "severity": "P2",
+      "category": "Database Issues",
+      "incident_date": "2025-01-04 13:01:59",
+      "resolution_date": "2025-01-04 14:50:59",
+      "resolution_time_minutes": 46,
+      "document_type": "incident_report",
+      "affected_services": "cache-service",
+      "tags": "database_issues, kubernetes, security, microservices"
+    }
+  },
+  {
+    "error": "Container worker in pod reporting-service-4070 exceeded CPU limits consistently following network policy changes",
+    "solution": "Fixed misconfigured liveness probe that was causing unnecessary restarts.",
+    "metadata": {
+      "incident_id": "INC-32283",
+      "severity": "P2",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-08-11 13:01:59",
+      "resolution_date": "2024-08-11 16:38:59",
+      "resolution_time_minutes": 126,
+      "document_type": "architecture_doc",
+      "affected_services": "reporting-service, messaging-service, billing-service",
+      "tags": "pod_container_issues, database, networking, kubernetes"
+    }
+  },
+  {
+    "error": "ConfigMap logging-service-config referenced by deployment monitoring-service not found during multi-service coordinated release",
+    "solution": "Fixed invalid YAML indentation in deployment manifest that was causing parsing errors.",
+    "metadata": {
+      "incident_id": "INC-61317",
+      "severity": "P4",
+      "category": "Deployment Failures",
+      "incident_date": "2024-12-26 13:01:59",
+      "resolution_date": "2024-12-26 13:35:59",
+      "resolution_time_minutes": 216,
+      "document_type": "code_snippet",
+      "affected_services": "recommendation-engine, cart-service",
+      "tags": "deployment_failures, networking, monitoring"
+    }
+  },
+  {
+    "error": "Cache hit ratio for metrics-db dropped to 65%, causing increased database load following schema update",
+    "solution": "Added database monitoring with alerting for critical metrics like connection count, query time, and error rate.",
+    "metadata": {
+      "incident_id": "INC-28179",
+      "severity": "P2",
+      "category": "Database Issues",
+      "incident_date": "2024-09-16 13:01:59",
+      "resolution_date": "2024-09-16 15:49:59",
+      "resolution_time_minutes": 171,
+      "document_type": "runbook",
+      "affected_services": "api-gateway, cart-service, shipping-service",
+      "tags": "database_issues, performance, database, kubernetes"
+    }
+  },
+  {
+    "error": "Container frontend in pod api-gateway-3187 exceeded CPU limits consistently following network policy changes",
+    "solution": "Increased memory limits in the deployment manifest from 167Mi to 693Mi and redeployed the application.",
+    "metadata": {
+      "incident_id": "INC-54289",
+      "severity": "P4",
+      "category": "Pod Container Issues",
+      "incident_date": "2025-02-03 13:01:59",
+      "resolution_date": "2025-02-03 15:52:59",
+      "resolution_time_minutes": 88,
+      "document_type": "incident_report",
+      "affected_services": "analytics-service, cart-service, shipping-service",
+      "tags": "pod_container_issues, monitoring"
+    }
+  },
+  {
+    "error": "Deployment user-service failed validation checks during scheduled release window",
+    "solution": "Updated health check endpoints to use /health/ready instead of deprecated /status path.",
+    "metadata": {
+      "incident_id": "INC-28785",
+      "severity": "P2",
+      "category": "Deployment Failures",
+      "incident_date": "2024-07-21 13:01:59",
+      "resolution_date": "2024-07-21 14:26:59",
+      "resolution_time_minutes": 143,
+      "document_type": "chat_log",
+      "affected_services": "user-service, billing-service, order-processor",
+      "tags": "deployment_failures, microservices, networking, kubernetes"
+    }
+  },
+  {
+    "error": "Ingress controller for monitoring-service returning HTTP 503 errors intermittently following DNS configuration change",
+    "solution": "Applied network policy to allow traffic between user-service and user-service namespaces.",
+    "metadata": {
+      "incident_id": "INC-34532",
+      "severity": "P3",
+      "category": "Networking Issues",
+      "incident_date": "2024-05-28 13:01:59",
+      "resolution_date": "2024-05-28 15:52:59",
+      "resolution_time_minutes": 157,
+      "document_type": "runbook",
+      "affected_services": "api-gateway, analytics-service",
+      "tags": "networking_issues, performance, performance, microservices"
+    }
+  },
+  {
+    "error": "API server showing high latency due to excessive requests from api-gateway following data import job",
+    "solution": "Increased cluster capacity by adding 3 nodes to handle peak workload.",
+    "metadata": {
+      "incident_id": "INC-14261",
+      "severity": "P2",
+      "category": "Resource Constraints",
+      "incident_date": "2024-12-30 13:01:59",
+      "resolution_date": "2024-12-30 16:42:59",
+      "resolution_time_minutes": 82,
+      "document_type": "runbook",
+      "affected_services": "cart-service",
+      "tags": "resource_constraints, security"
+    }
+  },
+  {
+    "error": "Several pods in demo showing RunContainerError following security patch updates",
+    "solution": "Corrected environment variable CACHE_TTL that was incorrectly set to 'localhost:5432' instead of '60s'.",
+    "metadata": {
+      "incident_id": "INC-49838",
+      "severity": "P1",
+      "category": "Pod Container Issues",
+      "incident_date": "2025-03-17 13:01:59",
+      "resolution_date": "2025-03-17 15:11:59",
+      "resolution_time_minutes": 60,
+      "document_type": "incident_report",
+      "affected_services": "cart-service, search-service, inventory-manager",
+      "tags": "pod_container_issues, microservices, microservices, microservices"
+    }
+  },
+  {
+    "error": "Multiple pods in demo namespace showing high restart counts after recent deployment",
+    "solution": "Added node anti-affinity rules to distribute pods across multiple nodes to prevent resource contention.",
+    "metadata": {
+      "incident_id": "INC-80449",
+      "severity": "P2",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-07-23 13:01:59",
+      "resolution_date": "2024-07-23 17:00:59",
+      "resolution_time_minutes": 93,
+      "document_type": "incident_report",
+      "affected_services": "reporting-service, reporting-service",
+      "tags": "pod_container_issues, networking, cloud, networking"
+    }
+  },
+  {
+    "error": "Load balancer for cache-service reporting unhealthy backends during multi-cluster operations",
+    "solution": "Fixed TLS certificate mismatch by updating the secret with the correct certificate chain.",
+    "metadata": {
+      "incident_id": "INC-18978",
+      "severity": "P2",
+      "category": "Networking Issues",
+      "incident_date": "2024-08-30 13:01:59",
+      "resolution_date": "2024-08-30 15:56:59",
+      "resolution_time_minutes": 109,
+      "document_type": "runbook",
+      "affected_services": "reporting-service, analytics-service",
+      "tags": "networking_issues, kubernetes"
+    }
+  },
+  {
+    "error": "Helm chart installation of analytics-service failed with timeout error during automated CI/CD pipeline run",
+    "solution": "Implemented progressive rollout strategy with 10% increments instead of 50% to reduce impact.",
+    "metadata": {
+      "incident_id": "INC-24239",
+      "severity": "P1",
+      "category": "Deployment Failures",
+      "incident_date": "2024-05-02 13:01:59",
+      "resolution_date": "2024-05-02 16:51:59",
+      "resolution_time_minutes": 159,
+      "document_type": "incident_report",
+      "affected_services": "search-service, api-gateway",
+      "tags": "deployment_failures, microservices"
+    }
+  },
+  {
+    "error": "Database query timeout after 21s for service payment-gateway during data import job",
+    "solution": "Updated database instance size from r5.xlarge to r5.2xlarge to accommodate increased workload.",
+    "metadata": {
+      "incident_id": "INC-77493",
+      "severity": "P3",
+      "category": "Database Issues",
+      "incident_date": "2025-04-25 13:01:59",
+      "resolution_date": "2025-04-25 13:39:59",
+      "resolution_time_minutes": 170,
+      "document_type": "code_snippet",
+      "affected_services": "analytics-service, analytics-service",
+      "tags": "database_issues, security"
+    }
+  },
+  {
+    "error": "Failed to deploy version 3.9.1 of order-processor to development as part of major version upgrade",
+    "solution": "Fixed dependency order in Helm chart to ensure database migrations run before application pods.",
+    "metadata": {
+      "incident_id": "INC-95569",
+      "severity": "P4",
+      "category": "Deployment Failures",
+      "incident_date": "2024-10-29 13:01:59",
+      "resolution_date": "2024-10-29 14:59:59",
+      "resolution_time_minutes": 139,
+      "document_type": "code_snippet",
+      "affected_services": "user-service",
+      "tags": "deployment_failures, networking, kubernetes"
+    }
+  },
+  {
+    "error": "Container cache in pod search-service-8604 exceeded CPU limits consistently after config map update",
+    "solution": "Implemented horizontal pod autoscaling based on custom metrics to handle traffic spikes.",
+    "metadata": {
+      "incident_id": "INC-76169",
+      "severity": "P4",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-11-02 13:01:59",
+      "resolution_date": "2024-11-02 14:44:59",
+      "resolution_time_minutes": 32,
+      "document_type": "incident_report",
+      "affected_services": "analytics-service, notification-service",
+      "tags": "pod_container_issues, database, networking"
+    }
+  },
+  {
+    "error": "Circuit breaker open for api-gateway after 16 consecutive failures following certificate rotation",
+    "solution": "Fixed serialization issue in API response by updating content type header.",
+    "metadata": {
+      "incident_id": "INC-55568",
+      "severity": "P4",
+      "category": "Api Errors",
+      "incident_date": "2025-01-12 13:01:59",
+      "resolution_date": "2025-01-12 15:06:59",
+      "resolution_time_minutes": 17,
+      "document_type": "runbook",
+      "affected_services": "product-catalog, user-service",
+      "tags": "api_errors, microservices"
+    }
+  },
+  {
+    "error": "API endpoint messaging-service/data returning unexpected HTTP 503 responses following certificate rotation",
+    "solution": "Added comprehensive error handling with detailed error codes and messages.",
+    "metadata": {
+      "incident_id": "INC-28459",
+      "severity": "P2",
+      "category": "Api Errors",
+      "incident_date": "2024-10-25 13:01:59",
+      "resolution_date": "2024-10-25 13:52:59",
+      "resolution_time_minutes": 229,
+      "document_type": "runbook",
+      "affected_services": "reporting-service",
+      "tags": "api_errors, networking, kubernetes, database"
+    }
+  },
+  {
+    "error": "Increased error rate of 46% for database operations from service cart-service following schema update",
+    "solution": "Implemented data partitioning strategy to improve query performance and maintenance operations.",
+    "metadata": {
+      "incident_id": "INC-89481",
+      "severity": "P4",
+      "category": "Database Issues",
+      "incident_date": "2025-03-25 13:01:59",
+      "resolution_date": "2025-03-25 16:04:59",
+      "resolution_time_minutes": 221,
+      "document_type": "runbook",
+      "affected_services": "billing-service, authentication-service",
+      "tags": "database_issues, kubernetes"
+    }
+  },
+  {
+    "error": "Several pods in integration showing RunContainerError after cluster upgrade",
+    "solution": "Increased memory limits in the deployment manifest from 475Mi to 607Mi and redeployed the application.",
+    "metadata": {
+      "incident_id": "INC-66370",
+      "severity": "P2",
+      "category": "Pod Container Issues",
+      "incident_date": "2025-04-22 13:01:59",
+      "resolution_date": "2025-04-22 15:29:59",
+      "resolution_time_minutes": 37,
+      "document_type": "runbook",
+      "affected_services": "user-service",
+      "tags": "pod_container_issues, cloud"
+    }
+  },
+  {
+    "error": "Connection refused errors when pods try to reach analytics-db after security group changes",
+    "solution": "Optimized MTU settings to prevent packet fragmentation issues.",
+    "metadata": {
+      "incident_id": "INC-32547",
+      "severity": "P2",
+      "category": "Networking Issues",
+      "incident_date": "2024-06-02 13:01:59",
+      "resolution_date": "2024-06-02 16:32:59",
+      "resolution_time_minutes": 93,
+      "document_type": "runbook",
+      "affected_services": "logging-service, product-catalog, recommendation-engine",
+      "tags": "networking_issues, cloud"
+    }
+  },
+  {
+    "error": "Latency spikes of 1138ms observed in traffic to api-gateway after adding new cluster nodes",
+    "solution": "Fixed TLS certificate mismatch by updating the secret with the correct certificate chain.",
+    "metadata": {
+      "incident_id": "INC-98757",
+      "severity": "P4",
+      "category": "Networking Issues",
+      "incident_date": "2024-10-31 13:01:59",
+      "resolution_date": "2024-10-31 15:03:59",
+      "resolution_time_minutes": 147,
+      "document_type": "runbook",
+      "affected_services": "user-service, notification-service",
+      "tags": "networking_issues, database, networking"
+    }
+  },
+  {
+    "error": "Latency spikes of 764ms observed in traffic to user-service after adding new cluster nodes",
+    "solution": "Updated CoreDNS configuration to increase cache TTL from 25s to 56s.",
+    "metadata": {
+      "incident_id": "INC-87109",
+      "severity": "P2",
+      "category": "Networking Issues",
+      "incident_date": "2025-02-22 13:01:59",
+      "resolution_date": "2025-02-22 15:07:59",
+      "resolution_time_minutes": 72,
+      "document_type": "code_snippet",
+      "affected_services": "recommendation-engine, recommendation-engine",
+      "tags": "networking_issues, performance, performance"
+    }
+  },
+  {
+    "error": "Replication lag on catalog-db read replica increased to 225 seconds during data import job",
+    "solution": "Optimized slow-performing query by adding index on transaction_id, reducing execution time from 1137ms to 167ms.",
+    "metadata": {
+      "incident_id": "INC-26206",
+      "severity": "P3",
+      "category": "Database Issues",
+      "incident_date": "2025-02-20 13:01:59",
+      "resolution_date": "2025-02-20 16:13:59",
+      "resolution_time_minutes": 177,
+      "document_type": "runbook",
+      "affected_services": "recommendation-engine",
+      "tags": "database_issues, database, cloud"
+    }
+  },
+  {
+    "error": "Failed to deploy version 4.9.9 of cart-service to production during manual hotfix deployment",
+    "solution": "Implemented progressive rollout strategy with 10% increments instead of 50% to reduce impact.",
+    "metadata": {
+      "incident_id": "INC-60434",
+      "severity": "P4",
+      "category": "Deployment Failures",
+      "incident_date": "2025-01-10 13:01:59",
+      "resolution_date": "2025-01-10 16:53:59",
+      "resolution_time_minutes": 240,
+      "document_type": "runbook",
+      "affected_services": "monitoring-service, configuration-service",
+      "tags": "deployment_failures, security, monitoring, monitoring"
+    }
+  },
+  {
+    "error": "API endpoint analytics-service/api/v1/users returning unexpected HTTP 503 responses after schema change",
+    "solution": "Added circuit breaker pattern to fail fast when downstream service is unavailable.",
+    "metadata": {
+      "incident_id": "INC-97841",
+      "severity": "P4",
+      "category": "Api Errors",
+      "incident_date": "2024-05-14 13:01:59",
+      "resolution_date": "2024-05-14 14:57:59",
+      "resolution_time_minutes": 127,
+      "document_type": "incident_report",
+      "affected_services": "monitoring-service",
+      "tags": "api_errors, microservices, kubernetes, cloud"
+    }
+  },
+  {
+    "error": "TLS handshake failures between messaging-service and billing-service during service mesh deployment",
+    "solution": "Updated ingress timeout settings from 11s to 18s to accommodate longer processing times.",
+    "metadata": {
+      "incident_id": "INC-98588",
+      "severity": "P1",
+      "category": "Networking Issues",
+      "incident_date": "2025-02-08 13:01:59",
+      "resolution_date": "2025-02-08 13:17:59",
+      "resolution_time_minutes": 12,
+      "document_type": "runbook",
+      "affected_services": "messaging-service, authentication-service",
+      "tags": "networking_issues, cloud"
+    }
+  },
+  {
+    "error": "Cache hit ratio for analytics-db dropped to 67%, causing increased database load following configuration change",
+    "solution": "Refactored application to use batch operations instead of individual queries for bulk operations.",
+    "metadata": {
+      "incident_id": "INC-42475",
+      "severity": "P3",
+      "category": "Database Issues",
+      "incident_date": "2024-07-22 13:01:59",
+      "resolution_date": "2024-07-22 16:17:59",
+      "resolution_time_minutes": 172,
+      "document_type": "runbook",
+      "affected_services": "payment-gateway",
+      "tags": "database_issues, performance, networking, database"
+    }
+  },
+  {
+    "error": "Database analytics-db CPU utilization peaked at 82% causing query performance issues following configuration change",
+    "solution": "Refactored application to use batch operations instead of individual queries for bulk operations.",
+    "metadata": {
+      "incident_id": "INC-25912",
+      "severity": "P1",
+      "category": "Database Issues",
+      "incident_date": "2024-09-03 13:01:59",
+      "resolution_date": "2024-09-03 16:13:59",
+      "resolution_time_minutes": 182,
+      "document_type": "runbook",
+      "affected_services": "inventory-manager, shipping-service, user-service",
+      "tags": "database_issues, microservices"
+    }
+  },
+  {
+    "error": "Network timeouts when accessing external endpoint https://api.example.com/v1 following CNI plugin update",
+    "solution": "Implemented retry logic with exponential backoff for critical service communications.",
+    "metadata": {
+      "incident_id": "INC-18673",
+      "severity": "P4",
+      "category": "Networking Issues",
+      "incident_date": "2024-07-30 13:01:59",
+      "resolution_date": "2024-07-30 16:11:59",
+      "resolution_time_minutes": 33,
+      "document_type": "runbook",
+      "affected_services": "monitoring-service, search-service",
+      "tags": "networking_issues, performance"
+    }
+  },
+  {
+    "error": "Webhook user-service-webhook failing with connection refused errors after client library update",
+    "solution": "Fixed serialization issue in API response by updating content type header.",
+    "metadata": {
+      "incident_id": "INC-76838",
+      "severity": "P2",
+      "category": "Api Errors",
+      "incident_date": "2025-05-01 13:01:59",
+      "resolution_date": "2025-05-01 14:15:59",
+      "resolution_time_minutes": 116,
+      "document_type": "runbook",
+      "affected_services": "shipping-service",
+      "tags": "api_errors, kubernetes, database"
+    }
+  },
+  {
+    "error": "Replication lag on payments-db read replica increased to 218 seconds after database instance resize",
+    "solution": "Optimized slow-performing query by adding index on status, reducing execution time from 1645ms to 104ms.",
+    "metadata": {
+      "incident_id": "INC-40463",
+      "severity": "P3",
+      "category": "Database Issues",
+      "incident_date": "2024-12-22 13:01:59",
+      "resolution_date": "2024-12-22 13:14:59",
+      "resolution_time_minutes": 56,
+      "document_type": "runbook",
+      "affected_services": "logging-service, analytics-service",
+      "tags": "database_issues, cloud, microservices, kubernetes"
+    }
+  },
+  {
+    "error": "Multiple pods in api namespace showing high restart counts after config map update",
+    "solution": "Implemented horizontal pod autoscaling based on custom metrics to handle traffic spikes.",
+    "metadata": {
+      "incident_id": "INC-31344",
+      "severity": "P4",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-12-05 13:01:59",
+      "resolution_date": "2024-12-05 14:50:59",
+      "resolution_time_minutes": 22,
+      "document_type": "incident_report",
+      "affected_services": "notification-service, reporting-service, analytics-service",
+      "tags": "pod_container_issues, microservices"
+    }
+  },
+  {
+    "error": "Pod authentication-service-2068 terminated due to memory pressure on node data-node-2 after adding new application features",
+    "solution": "Added memory limits to prevent single pod from consuming excessive resources.",
+    "metadata": {
+      "incident_id": "INC-45519",
+      "severity": "P1",
+      "category": "Resource Constraints",
+      "incident_date": "2024-06-15 13:01:59",
+      "resolution_date": "2024-06-15 13:33:59",
+      "resolution_time_minutes": 19,
+      "document_type": "runbook",
+      "affected_services": "logging-service",
+      "tags": "resource_constraints, performance"
+    }
+  },
+  {
+    "error": "Pod search-service-2213 terminated due to memory pressure on node worker-node-4 after adding new application features",
+    "solution": "Implemented connection pooling to limit maximum concurrent database connections.",
+    "metadata": {
+      "incident_id": "INC-44020",
+      "severity": "P1",
+      "category": "Resource Constraints",
+      "incident_date": "2024-11-06 13:01:59",
+      "resolution_date": "2024-11-06 13:46:59",
+      "resolution_time_minutes": 209,
+      "document_type": "incident_report",
+      "affected_services": "configuration-service",
+      "tags": "resource_constraints, database, security"
+    }
+  },
+  {
+    "error": "Secret shipping-service-secret required by deployment product-catalog has incorrect format during scheduled release window",
+    "solution": "Implemented progressive rollout strategy with 10% increments instead of 50% to reduce impact.",
+    "metadata": {
+      "incident_id": "INC-54790",
+      "severity": "P4",
+      "category": "Deployment Failures",
+      "incident_date": "2024-08-24 13:01:59",
+      "resolution_date": "2024-08-24 13:35:59",
+      "resolution_time_minutes": 128,
+      "document_type": "incident_report",
+      "affected_services": "api-gateway",
+      "tags": "deployment_failures, performance"
+    }
+  },
+  {
+    "error": "Horizontal Pod Autoscaler unable to scale search-service due to reaching maximum replica count following log level change to DEBUG",
+    "solution": "Scheduled batch processing jobs to run during off-peak hours.",
+    "metadata": {
+      "incident_id": "INC-58189",
+      "severity": "P1",
+      "category": "Resource Constraints",
+      "incident_date": "2024-08-18 13:01:59",
+      "resolution_date": "2024-08-18 14:33:59",
+      "resolution_time_minutes": 152,
+      "document_type": "incident_report",
+      "affected_services": "shipping-service, logging-service, search-service",
+      "tags": "resource_constraints, kubernetes, monitoring, performance"
+    }
+  },
+  {
+    "error": "ConfigMap billing-service-config referenced by deployment product-catalog not found during scheduled release window",
+    "solution": "Fixed invalid YAML indentation in deployment manifest that was causing parsing errors.",
+    "metadata": {
+      "incident_id": "INC-76808",
+      "severity": "P4",
+      "category": "Deployment Failures",
+      "incident_date": "2024-05-27 13:01:59",
+      "resolution_date": "2024-05-27 14:51:59",
+      "resolution_time_minutes": 16,
+      "document_type": "code_snippet",
+      "affected_services": "cart-service",
+      "tags": "deployment_failures, performance, performance, security"
+    }
+  },
+  {
+    "error": "Pod shipping-service-9067 stuck in ContainerCreating state for over 30 minutes following infrastructure maintenance",
+    "solution": "Fixed image tag in deployment spec from 'v3.6' to 'v1.0'.",
+    "metadata": {
+      "incident_id": "INC-28482",
+      "severity": "P4",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-11-02 13:01:59",
+      "resolution_date": "2024-11-02 15:53:59",
+      "resolution_time_minutes": 111,
+      "document_type": "incident_report",
+      "affected_services": "configuration-service, configuration-service",
+      "tags": "pod_container_issues, microservices"
+    }
+  },
+  {
+    "error": "Pod configuration-service-6133 evicted due to node data-node-1 being out of resources during database migration",
+    "solution": "Added resource requests to match resource limits to improve pod scheduling efficiency.",
+    "metadata": {
+      "incident_id": "INC-19339",
+      "severity": "P1",
+      "category": "Pod Container Issues",
+      "incident_date": "2025-03-31 13:01:59",
+      "resolution_date": "2025-03-31 16:52:59",
+      "resolution_time_minutes": 205,
+      "document_type": "architecture_doc",
+      "affected_services": "cart-service, api-gateway",
+      "tags": "pod_container_issues, microservices, monitoring, networking"
+    }
+  },
+  {
+    "error": "Service payment-gateway reporting 72 HTTP 500 errors per minute after client library update",
+    "solution": "Implemented retry mechanism with exponential backoff for transient network errors.",
+    "metadata": {
+      "incident_id": "INC-43133",
+      "severity": "P2",
+      "category": "Api Errors",
+      "incident_date": "2024-08-21 13:01:59",
+      "resolution_date": "2024-08-21 14:16:59",
+      "resolution_time_minutes": 150,
+      "document_type": "code_snippet",
+      "affected_services": "logging-service",
+      "tags": "api_errors, microservices, cloud"
+    }
+  },
+  {
+    "error": "Latency spikes of 4168ms observed in traffic to cart-service after ingress controller update",
+    "solution": "Implemented retry logic with exponential backoff for critical service communications.",
+    "metadata": {
+      "incident_id": "INC-84376",
+      "severity": "P3",
+      "category": "Networking Issues",
+      "incident_date": "2025-01-08 13:01:59",
+      "resolution_date": "2025-01-08 13:06:59",
+      "resolution_time_minutes": 228,
+      "document_type": "incident_report",
+      "affected_services": "cache-service",
+      "tags": "networking_issues, security, cloud"
+    }
+  },
+  {
+    "error": "Invalid response format from cache-service breaking downstream consumer shipping-service during high load period",
+    "solution": "Updated client authentication to use JWT tokens instead of legacy API keys.",
+    "metadata": {
+      "incident_id": "INC-56109",
+      "severity": "P2",
+      "category": "Api Errors",
+      "incident_date": "2024-12-17 13:01:59",
+      "resolution_date": "2024-12-17 13:44:59",
+      "resolution_time_minutes": 222,
+      "document_type": "incident_report",
+      "affected_services": "order-processor, cart-service, user-service",
+      "tags": "api_errors, security, networking"
+    }
+  },
+  {
+    "error": "Webhook payment-gateway-webhook failing with connection refused errors following gateway configuration update",
+    "solution": "Implemented request validation middleware to catch invalid inputs before reaching service logic.",
+    "metadata": {
+      "incident_id": "INC-44253",
+      "severity": "P4",
+      "category": "Api Errors",
+      "incident_date": "2024-08-17 13:01:59",
+      "resolution_date": "2024-08-17 13:37:59",
+      "resolution_time_minutes": 202,
+      "document_type": "runbook",
+      "affected_services": "shipping-service",
+      "tags": "api_errors, networking, security"
+    }
+  },
+  {
+    "error": "Pod reporting-service-8125 stuck in CrashLoopBackOff state in namespace data during database migration",
+    "solution": "Corrected environment variable MAX_CONNECTIONS that was incorrectly set to 'false' instead of 'INFO'.",
+    "metadata": {
+      "incident_id": "INC-14821",
+      "severity": "P2",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-09-18 13:01:59",
+      "resolution_date": "2024-09-18 14:45:59",
+      "resolution_time_minutes": 122,
+      "document_type": "code_snippet",
+      "affected_services": "order-processor, shipping-service",
+      "tags": "pod_container_issues, kubernetes, database"
+    }
+  },
+  {
+    "error": "Database inventory-db CPU utilization peaked at 81% causing query performance issues during data archiving process",
+    "solution": "Optimized slow-performing query by adding index on timestamp, reducing execution time from 1357ms to 101ms.",
+    "metadata": {
+      "incident_id": "INC-73623",
+      "severity": "P2",
+      "category": "Database Issues",
+      "incident_date": "2024-06-23 13:01:59",
+      "resolution_date": "2024-06-23 15:20:59",
+      "resolution_time_minutes": 84,
+      "document_type": "runbook",
+      "affected_services": "api-gateway",
+      "tags": "database_issues, performance"
+    }
+  },
+  {
+    "error": "Latency spikes of 214ms observed in traffic to product-catalog after security group changes",
+    "solution": "Updated CoreDNS configuration to increase cache TTL from 17s to 42s.",
+    "metadata": {
+      "incident_id": "INC-11897",
+      "severity": "P4",
+      "category": "Networking Issues",
+      "incident_date": "2025-03-19 13:01:59",
+      "resolution_date": "2025-03-19 16:18:59",
+      "resolution_time_minutes": 30,
+      "document_type": "code_snippet",
+      "affected_services": "shipping-service",
+      "tags": "networking_issues, security, performance"
+    }
+  },
+  {
+    "error": "Secret user-service-secret required by deployment api-gateway has incorrect format during rollback operation",
+    "solution": "Fixed dependency order in Helm chart to ensure database migrations run before application pods.",
+    "metadata": {
+      "incident_id": "INC-81971",
+      "severity": "P2",
+      "category": "Deployment Failures",
+      "incident_date": "2024-12-26 13:01:59",
+      "resolution_date": "2024-12-26 13:21:59",
+      "resolution_time_minutes": 10,
+      "document_type": "incident_report",
+      "affected_services": "cache-service, notification-service",
+      "tags": "deployment_failures, kubernetes, database, cloud"
+    }
+  },
+  {
+    "error": "Blue-green deployment switch failed for search-service during scheduled release window",
+    "solution": "Corrected image pull secret reference to use namespace-specific secret.",
+    "metadata": {
+      "incident_id": "INC-42004",
+      "severity": "P4",
+      "category": "Deployment Failures",
+      "incident_date": "2024-12-28 13:01:59",
+      "resolution_date": "2024-12-28 13:56:59",
+      "resolution_time_minutes": 109,
+      "document_type": "runbook",
+      "affected_services": "cache-service, recommendation-engine",
+      "tags": "deployment_failures, kubernetes"
+    }
+  },
+  {
+    "error": "Horizontal Pod Autoscaler unable to scale billing-service due to reaching maximum replica count following log level change to DEBUG",
+    "solution": "Implemented rate limiting on API to prevent client from overwhelming the service.",
+    "metadata": {
+      "incident_id": "INC-69553",
+      "severity": "P1",
+      "category": "Resource Constraints",
+      "incident_date": "2024-11-28 13:01:59",
+      "resolution_date": "2024-11-28 16:07:59",
+      "resolution_time_minutes": 187,
+      "document_type": "incident_report",
+      "affected_services": "messaging-service, order-processor",
+      "tags": "resource_constraints, security, performance"
+    }
+  },
+  {
+    "error": "Init container failing in pod payment-gateway-2040 with exit code 1 after cluster upgrade",
+    "solution": "Implemented horizontal pod autoscaling based on custom metrics to handle traffic spikes.",
+    "metadata": {
+      "incident_id": "INC-37713",
+      "severity": "P2",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-06-07 13:01:59",
+      "resolution_date": "2024-06-07 13:23:59",
+      "resolution_time_minutes": 129,
+      "document_type": "architecture_doc",
+      "affected_services": "order-processor, product-catalog, billing-service",
+      "tags": "pod_container_issues, monitoring, security, cloud"
+    }
+  },
+  {
+    "error": "ETCd database size grown to 9GB causing performance degradation during unexpected traffic spike",
+    "solution": "Implemented efficient caching layer to reduce computational load by 38%.",
+    "metadata": {
+      "incident_id": "INC-64922",
+      "severity": "P3",
+      "category": "Resource Constraints",
+      "incident_date": "2024-07-05 13:01:59",
+      "resolution_date": "2024-07-05 14:32:59",
+      "resolution_time_minutes": 132,
+      "document_type": "incident_report",
+      "affected_services": "search-service",
+      "tags": "resource_constraints, monitoring, networking"
+    }
+  },
+  {
+    "error": "Pod notification-service-9363 terminated unexpectedly with exit code 137 after node auto-scaling event",
+    "solution": "Updated init container script to handle permission issues correctly.",
+    "metadata": {
+      "incident_id": "INC-11031",
+      "severity": "P1",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-05-29 13:01:59",
+      "resolution_date": "2024-05-29 15:24:59",
+      "resolution_time_minutes": 222,
+      "document_type": "code_snippet",
+      "affected_services": "notification-service, configuration-service",
+      "tags": "pod_container_issues, cloud"
+    }
+  },
+  {
+    "error": "Pod order-processor-5833 in namespace monitoring has ImagePullBackOff status during peak traffic hours",
+    "solution": "Updated init container script to handle permission issues correctly.",
+    "metadata": {
+      "incident_id": "INC-87738",
+      "severity": "P1",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-09-09 13:01:59",
+      "resolution_date": "2024-09-09 14:00:59",
+      "resolution_time_minutes": 171,
+      "document_type": "architecture_doc",
+      "affected_services": "cache-service, analytics-service, analytics-service",
+      "tags": "pod_container_issues, networking"
+    }
+  },
+  {
+    "error": "Cluster exceeded {resource_type} quota in namespace production after adding new application features",
+    "solution": "Implemented connection pooling to limit maximum concurrent database connections.",
+    "metadata": {
+      "incident_id": "INC-94630",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2024-08-10 13:01:59",
+      "resolution_date": "2024-08-10 16:22:59",
+      "resolution_time_minutes": 202,
+      "document_type": "runbook",
+      "affected_services": "monitoring-service, authentication-service",
+      "tags": "resource_constraints, cloud"
+    }
+  },
+  {
+    "error": "Node data-node-1 reporting disk pressure with 10GB remaining after adding new application features",
+    "solution": "Scheduled batch processing jobs to run during off-peak hours.",
+    "metadata": {
+      "incident_id": "INC-38634",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2024-07-16 13:01:59",
+      "resolution_date": "2024-07-16 13:13:59",
+      "resolution_time_minutes": 6,
+      "document_type": "code_snippet",
+      "affected_services": "logging-service",
+      "tags": "resource_constraints, database"
+    }
+  },
+  {
+    "error": "Init container failing in pod search-service-6815 with exit code 1 during database migration",
+    "solution": "Implemented horizontal pod autoscaling based on custom metrics to handle traffic spikes.",
+    "metadata": {
+      "incident_id": "INC-55931",
+      "severity": "P3",
+      "category": "Pod Container Issues",
+      "incident_date": "2025-03-28 13:01:59",
+      "resolution_date": "2025-03-28 14:25:59",
+      "resolution_time_minutes": 224,
+      "document_type": "runbook",
+      "affected_services": "cache-service",
+      "tags": "pod_container_issues, microservices, networking"
+    }
+  },
+  {
+    "error": "Pod order-processor-3480 in namespace demo has ImagePullBackOff status during peak traffic hours",
+    "solution": "Added resource requests to match resource limits to improve pod scheduling efficiency.",
+    "metadata": {
+      "incident_id": "INC-30669",
+      "severity": "P2",
+      "category": "Pod Container Issues",
+      "incident_date": "2025-03-27 13:01:59",
+      "resolution_date": "2025-03-27 13:55:59",
+      "resolution_time_minutes": 227,
+      "document_type": "architecture_doc",
+      "affected_services": "analytics-service",
+      "tags": "pod_container_issues, security"
+    }
+  },
+  {
+    "error": "Deployment api-gateway created pods that failed readiness probes following configuration change",
+    "solution": "Updated container command arguments to properly reference mounted config files.",
+    "metadata": {
+      "incident_id": "INC-24601",
+      "severity": "P3",
+      "category": "Deployment Failures",
+      "incident_date": "2025-03-26 13:01:59",
+      "resolution_date": "2025-03-26 16:06:59",
+      "resolution_time_minutes": 141,
+      "document_type": "chat_log",
+      "affected_services": "recommendation-engine, order-processor, cart-service",
+      "tags": "deployment_failures, monitoring, microservices, database"
+    }
+  },
+  {
+    "error": "Node worker-node-2 CPU usage at 97%, causing throttling of multiple pods following inadequate cleanup of temporary resources",
+    "solution": "Implemented connection pooling to limit maximum concurrent database connections.",
+    "metadata": {
+      "incident_id": "INC-16249",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2025-03-11 13:01:59",
+      "resolution_date": "2025-03-11 15:51:59",
+      "resolution_time_minutes": 107,
+      "document_type": "runbook",
+      "affected_services": "reporting-service, cache-service, logging-service",
+      "tags": "resource_constraints, performance"
+    }
+  },
+  {
+    "error": "API gateway reporting increased latency of 762ms for path order-processor/api/v2/orders during distributed tracing implementation",
+    "solution": "Updated client authentication to use JWT tokens instead of legacy API keys.",
+    "metadata": {
+      "incident_id": "INC-74833",
+      "severity": "P3",
+      "category": "Api Errors",
+      "incident_date": "2024-06-06 13:01:59",
+      "resolution_date": "2024-06-06 16:10:59",
+      "resolution_time_minutes": 6,
+      "document_type": "incident_report",
+      "affected_services": "api-gateway, analytics-service",
+      "tags": "api_errors, networking, monitoring"
+    }
+  },
+  {
+    "error": "Network policy restrict-egress blocking essential traffic to notification-service after network policy update",
+    "solution": "Implemented retry logic with exponential backoff for critical service communications.",
+    "metadata": {
+      "incident_id": "INC-48465",
+      "severity": "P2",
+      "category": "Networking Issues",
+      "incident_date": "2024-07-17 13:01:59",
+      "resolution_date": "2024-07-17 15:54:59",
+      "resolution_time_minutes": 129,
+      "document_type": "architecture_doc",
+      "affected_services": "cart-service, product-catalog",
+      "tags": "networking_issues, kubernetes, networking"
+    }
+  },
+  {
+    "error": "Container worker in pod notification-service-7709 exceeded CPU limits consistently following infrastructure maintenance",
+    "solution": "Updated node selectors to ensure pods land on nodes with sufficient resources.",
+    "metadata": {
+      "incident_id": "INC-18859",
+      "severity": "P1",
+      "category": "Pod Container Issues",
+      "incident_date": "2024-10-05 13:01:59",
+      "resolution_date": "2024-10-05 14:19:59",
+      "resolution_time_minutes": 114,
+      "document_type": "incident_report",
+      "affected_services": "search-service, configuration-service",
+      "tags": "pod_container_issues, cloud, kubernetes"
+    }
+  },
+  {
+    "error": "Increased error rate of 48% for database operations from service search-service during peak transaction period",
+    "solution": "Added circuit breaker pattern to prevent cascading failures when database experiences issues.",
+    "metadata": {
+      "incident_id": "INC-21418",
+      "severity": "P4",
+      "category": "Database Issues",
+      "incident_date": "2025-04-14 13:01:59",
+      "resolution_date": "2025-04-14 13:50:59",
+      "resolution_time_minutes": 37,
+      "document_type": "incident_report",
+      "affected_services": "notification-service, shipping-service, inventory-manager",
+      "tags": "database_issues, monitoring"
+    }
+  },
+  {
+    "error": "Database orders-db disk usage at 80% causing write performance degradation during backup operation",
+    "solution": "Optimized slow-performing query by adding index on order_id, reducing execution time from 1223ms to 193ms.",
+    "metadata": {
+      "incident_id": "INC-32359",
+      "severity": "P1",
+      "category": "Database Issues",
+      "incident_date": "2024-12-02 13:01:59",
+      "resolution_date": "2024-12-02 13:44:59",
+      "resolution_time_minutes": 172,
+      "document_type": "code_snippet",
+      "affected_services": "messaging-service, inventory-manager",
+      "tags": "database_issues, monitoring"
+    }
+  },
+  {
+    "error": "Node master-node-2 CPU usage at 89%, causing throttling of multiple pods following data import job",
+    "solution": "Increased cluster capacity by adding 3 nodes to handle peak workload.",
+    "metadata": {
+      "incident_id": "INC-28463",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2024-07-01 13:01:59",
+      "resolution_date": "2024-07-01 15:49:59",
+      "resolution_time_minutes": 175,
+      "document_type": "architecture_doc",
+      "affected_services": "order-processor, billing-service, monitoring-service",
+      "tags": "resource_constraints, monitoring"
+    }
+  },
+  {
+    "error": "Secret cart-service-secret required by deployment messaging-service has incorrect format during automated CI/CD pipeline run",
+    "solution": "Added missing service account permissions required by the application.",
+    "metadata": {
+      "incident_id": "INC-59693",
+      "severity": "P3",
+      "category": "Deployment Failures",
+      "incident_date": "2024-10-28 13:01:59",
+      "resolution_date": "2024-10-28 15:35:59",
+      "resolution_time_minutes": 34,
+      "document_type": "incident_report",
+      "affected_services": "search-service, inventory-manager, payment-gateway",
+      "tags": "deployment_failures, monitoring, cloud, monitoring"
+    }
+  },
+  {
+    "error": "API server showing high latency due to excessive requests from search-service during unexpected traffic spike",
+    "solution": "Configured pod disruption budget to ensure critical services maintain minimum availability.",
+    "metadata": {
+      "incident_id": "INC-21295",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2024-10-07 13:01:59",
+      "resolution_date": "2024-10-07 14:14:59",
+      "resolution_time_minutes": 90,
+      "document_type": "runbook",
+      "affected_services": "product-catalog",
+      "tags": "resource_constraints, microservices, kubernetes, cloud"
+    }
+  },
+  {
+    "error": "Deployment messaging-service failed validation checks as part of major version upgrade",
+    "solution": "Updated health check endpoints to use /health/ready instead of deprecated /status path.",
+    "metadata": {
+      "incident_id": "INC-67611",
+      "severity": "P3",
+      "category": "Deployment Failures",
+      "incident_date": "2025-04-08 13:01:59",
+      "resolution_date": "2025-04-08 14:54:59",
+      "resolution_time_minutes": 131,
+      "document_type": "incident_report",
+      "affected_services": "payment-gateway",
+      "tags": "deployment_failures, monitoring, kubernetes, security"
+    }
+  },
+  {
+    "error": "Deployment order-processor created pods that failed readiness probes as part of A/B testing deployment",
+    "solution": "Corrected image pull secret reference to use namespace-specific secret.",
+    "metadata": {
+      "incident_id": "INC-40084",
+      "severity": "P2",
+      "category": "Deployment Failures",
+      "incident_date": "2024-09-23 13:01:59",
+      "resolution_date": "2024-09-23 13:21:59",
+      "resolution_time_minutes": 35,
+      "document_type": "code_snippet",
+      "affected_services": "shipping-service, search-service, reporting-service",
+      "tags": "deployment_failures, database, networking"
+    }
+  },
+  {
+    "error": "Horizontal Pod Autoscaler unable to scale billing-service due to reaching maximum replica count following log level change to DEBUG",
+    "solution": "Implemented vertical pod autoscaling to automatically adjust resource requests based on actual usage.",
+    "metadata": {
+      "incident_id": "INC-86081",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2024-08-30 13:01:59",
+      "resolution_date": "2024-08-30 14:02:59",
+      "resolution_time_minutes": 109,
+      "document_type": "code_snippet",
+      "affected_services": "recommendation-engine, authentication-service, messaging-service",
+      "tags": "resource_constraints, kubernetes"
+    }
+  },
+  {
+    "error": "Invalid response format from monitoring-service breaking downstream consumer reporting-service after client library update",
+    "solution": "Implemented request validation middleware to catch invalid inputs before reaching service logic.",
+    "metadata": {
+      "incident_id": "INC-59667",
+      "severity": "P3",
+      "category": "Api Errors",
+      "incident_date": "2025-03-30 13:01:59",
+      "resolution_date": "2025-03-30 15:16:59",
+      "resolution_time_minutes": 137,
+      "document_type": "incident_report",
+      "affected_services": "cart-service",
+      "tags": "api_errors, cloud"
+    }
+  },
+  {
+    "error": "Cluster exceeded {resource_type} quota in namespace development after adding new application features",
+    "solution": "Optimized query patterns to reduce database CPU usage by 40%.",
+    "metadata": {
+      "incident_id": "INC-11571",
+      "severity": "P3",
+      "category": "Resource Constraints",
+      "incident_date": "2025-02-09 13:01:59",
+      "resolution_date": "2025-02-09 15:19:59",
+      "resolution_time_minutes": 189,
+      "document_type": "runbook",
+      "affected_services": "reporting-service",
+      "tags": "resource_constraints, microservices"
+    }
+  },
+  {
+    "error": "Version mismatch in API call from v2 client to v4 server during high load period",
+    "solution": "Fixed serialization issue in API response by updating content type header.",
+    "metadata": {
+      "incident_id": "INC-24868",
+      "severity": "P4",
+      "category": "Api Errors",
+      "incident_date": "2025-03-26 13:01:59",
+      "resolution_date": "2025-03-26 13:28:59",
+      "resolution_time_minutes": 38,
+      "document_type": "runbook",
+      "affected_services": "recommendation-engine, order-processor",
+      "tags": "api_errors, microservices, performance"
+    }
+  },
+  {
+    "error": "Database payments-db CPU utilization peaked at 99% causing query performance issues following configuration change",
+    "solution": "Updated database configuration to increase max_connections from 314 to 805.",
+    "metadata": {
+      "incident_id": "INC-32754",
+      "severity": "P4",
+      "category": "Database Issues",
+      "incident_date": "2025-01-15 13:01:59",
+      "resolution_date": "2025-01-15 16:55:59",
+      "resolution_time_minutes": 205,
+      "document_type": "incident_report",
+      "affected_services": "recommendation-engine, inventory-manager",
+      "tags": "database_issues, microservices, security"
+    }
+  },
+  {
+    "error": "Rollout of payment-gateway stuck at 16% completion following configuration change",
+    "solution": "Updated health check endpoints to use /health/ready instead of deprecated /status path.",
+    "metadata": {
+      "incident_id": "INC-93168",
+      "severity": "P2",
+      "category": "Deployment Failures",
+      "incident_date": "2024-12-01 13:01:59",
+      "resolution_date": "2024-12-01 13:36:59",
+      "resolution_time_minutes": 28,
+      "document_type": "runbook",
+      "affected_services": "reporting-service, cart-service, api-gateway",
+      "tags": "deployment_failures, monitoring, performance, microservices"
+    }
+  },
+  {
+    "error": "Secret notification-service-secret required by deployment logging-service has incorrect format during infrastructure migration",
+    "solution": "Fixed invalid YAML indentation in deployment manifest that was causing parsing errors.",
+    "metadata": {
+      "incident_id": "INC-72768",
+      "severity": "P3",
+      "category": "Deployment Failures",
+      "incident_date": "2024-06-13 13:01:59",
+      "resolution_date": "2024-06-13 16:39:59",
+      "resolution_time_minutes": 142,
+      "document_type": "runbook",
+      "affected_services": "order-processor",
+      "tags": "deployment_failures, kubernetes, cloud"
+    }
+  },
+  {
+    "error": "Post-deployment tests for analytics-service failed with 847 errors during infrastructure migration",
+    "solution": "Updated container command arguments to properly reference mounted config files.",
+    "metadata": {
+      "incident_id": "INC-50907",
+      "severity": "P3",
+      "category": "Deployment Failures",
+      "incident_date": "2025-01-30 13:01:59",
+      "resolution_date": "2025-01-30 16:37:59",
+      "resolution_time_minutes": 205,
+      "document_type": "runbook",
+      "affected_services": "inventory-manager, notification-service",
+      "tags": "deployment_failures, performance"
+    }
+  },
+  {
+    "error": "ETCd database size grown to 19GB causing performance degradation after enabling detailed metrics collection",
+    "solution": "Implemented rate limiting on API to prevent client from overwhelming the service.",
+    "metadata": {
+      "incident_id": "INC-81435",
+      "severity": "P4",
+      "category": "Resource Constraints",
+      "incident_date": "2025-04-08 13:01:59",
+      "resolution_date": "2025-04-08 16:24:59",
+      "resolution_time_minutes": 167,
+      "document_type": "incident_report",
+      "affected_services": "shipping-service, shipping-service",
+      "tags": "resource_constraints, cloud"
+    }
+  },
+  {
+    "error": "TLS handshake failures between authentication-service and billing-service during service mesh deployment",
+    "solution": "Updated CoreDNS configuration to increase cache TTL from 27s to 107s.",
+    "metadata": {
+      "incident_id": "INC-41983",
+      "severity": "P3",
+      "category": "Networking Issues",
+      "incident_date": "2024-05-25 13:01:59",
+      "resolution_date": "2024-05-25 14:56:59",
+      "resolution_time_minutes": 174,
+      "document_type": "incident_report",
+      "affected_services": "messaging-service, analytics-service, search-service",
+      "tags": "networking_issues, cloud, performance, monitoring"
+    }
+  },
+  {
+    "error": "Cache hit ratio for inventory-db dropped to 67%, causing increased database load following application release",
+    "solution": "Added read replicas to distribute read queries and reduce primary database load.",
+    "metadata": {
+      "incident_id": "INC-71394",
+      "severity": "P1",
+      "category": "Database Issues",
+      "incident_date": "2025-03-31 13:01:59",
+      "resolution_date": "2025-03-31 16:07:59",
+      "resolution_time_minutes": 227,
+      "document_type": "architecture_doc",
+      "affected_services": "monitoring-service, search-service, payment-gateway",
+      "tags": "database_issues, networking"
+    }
+  },
+  {
+    "error": "Helm chart installation of inventory-manager failed with timeout error during manual hotfix deployment",
+    "solution": "Corrected image pull secret reference to use namespace-specific secret.",
+    "metadata": {
+      "incident_id": "INC-96260",
+      "severity": "P1",
+      "category": "Deployment Failures",
+      "incident_date": "2024-12-05 13:01:59",
+      "resolution_date": "2024-12-05 14:25:59",
+      "resolution_time_minutes": 229,
+      "document_type": "incident_report",
+      "affected_services": "messaging-service, cache-service",
+      "tags": "deployment_failures, performance, database, database"
+    }
+  },
+  {
+    "error": "Invalid response format from reporting-service breaking downstream consumer recommendation-engine after API version update",
+    "solution": "Added comprehensive error handling with detailed error codes and messages.",
+    "metadata": {
+      "incident_id": "INC-50963",
+      "severity": "P3",
+      "category": "Api Errors",
+      "incident_date": "2025-02-22 13:01:59",
+      "resolution_date": "2025-02-22 16:48:59",
+      "resolution_time_minutes": 220,
+      "document_type": "runbook",
+      "affected_services": "recommendation-engine",
+      "tags": "api_errors, monitoring, networking"
+    }
+  },
+  {
+    "error": "Invalid response format from configuration-service breaking downstream consumer inventory-manager following certificate rotation",
+    "solution": "Implemented retry mechanism with exponential backoff for transient network errors.",
+    "metadata": {
+      "incident_id": "INC-80989",
+      "severity": "P4",
+      "category": "Api Errors",
+      "incident_date": "2025-03-09 13:01:59",
+      "resolution_date": "2025-03-09 14:57:59",
+      "resolution_time_minutes": 207,
+      "document_type": "incident_report",
+      "affected_services": "messaging-service, authentication-service, payment-gateway",
+      "tags": "api_errors, networking, security, microservices"
+    }
+  }
+]
