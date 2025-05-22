@@ -37,6 +37,8 @@ This example demonstrates how to create an Orchestrator Agent that intelligently
    ```
 
 5. Install SearxNG (See: https://github.com/searxng/searxng)
+- docker compose up -d
+- docker compose down
 
 6. Run the example:
    ```bash
