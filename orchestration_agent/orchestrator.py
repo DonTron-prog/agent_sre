@@ -18,7 +18,7 @@ from orchestration_agent.tools.calculator import (
     CalculatorToolInputSchema,
     CalculatorToolOutputSchema,
 )
-from orchestration_agent.tools.rag_search import ( 
+from orchestration_agent.tools.rag_search import (
     RAGSearchTool,
     RAGSearchToolConfig,
     RAGSearchToolInputSchema,
@@ -114,7 +114,7 @@ orchestrator_agent.register_context_provider("current_date", CurrentDateProvider
 def execute_tool(
     searxng_tool: SearxNGSearchTool, calculator_tool: CalculatorTool, rag_tool: RAGSearchTool, orchestrator_output: OrchestratorOutputSchema
 ) -> Union[SearxNGSearchToolOutputSchema, CalculatorToolOutputSchema, RAGSearchToolOutputSchema]:
-    if orchestrator_output.tool == "search":
+    if orchestrator_output.tool in ("search", "web-search"):
         # Ensure the parameters are of the correct type for the tool
         if not isinstance(orchestrator_output.tool_parameters, SearxNGSearchToolInputSchema):
             raise ValueError(f"Invalid parameters for search tool: {orchestrator_output.tool_parameters}")
@@ -152,17 +152,12 @@ if __name__ == "__main__":
     # Configure RAG tool - create a knowledge_base directory in the SRE-agent folder or update path
     # Ensure OPENAI_API_KEY is set in .env or environment
     knowledge_base_dir = os.path.join(os.path.dirname(__file__), "..", "knowledge_base_sre")
-    os.makedirs(knowledge_base_dir, exist_ok=True)
-    # Add some dummy files to knowledge_base_sre for testing
-    with open(os.path.join(knowledge_base_dir, "sre_handbook.md"), "w") as f:
-        f.write("# SRE Handbook\n\nThis document contains best practices for Site Reliability Engineering.\n\n## Chapter 1: Introduction\nSLOs, SLIs, Error Budgets.")
-    with open(os.path.join(knowledge_base_dir, "incident_response.txt"), "w") as f:
-        f.write("Incident Response Plan:\n1. Identify\n2. Contain\n3. Eradicate\n4. Recover\n5. Lessons Learned.")
-        
+    print(f"!!! DEBUG 1")   
     rag_tool_config = RAGSearchToolConfig(
         docs_dir=knowledge_base_dir,
         persist_dir=os.path.join(os.path.dirname(__file__), "..", "sre_chroma_db"),
-        recreate_collection_on_init=False # Set to False after first run if you want to persist DB
+        recreate_collection_on_init=False, # Set to False after first run if you want to persist DB
+        force_reload_documents=False # Set to True if you want to force reindexing of documents
     )
     rag_tool = RAGSearchTool(config=rag_tool_config)
 
@@ -175,10 +170,10 @@ if __name__ == "__main__":
 
     # Example inputs
     inputs = [
-        {
-            "alert": "High CPU utilization (95%) on server web-prod-01 for 15 minutes.",
-            "context": "System: Production Web Server Cluster (nginx, Python/Flask). Service: Main customer-facing website. Recent changes: New deployment v2.3.1 two hours ago. Known issues: Occasional spikes during peak load. Monitoring tool: Prometheus."
-        },
+        #{
+        #    "alert": "High CPU utilization (95%) on server web-prod-01 for 15 minutes.",
+        #    "context": "System: Production Web Server Cluster (nginx, Python/Flask). Service: Main customer-facing website. Recent changes: New deployment v2.3.1 two hours ago. Known issues: Occasional spikes during peak load. Monitoring tool: Prometheus."
+        #},
         {
             "alert": "Critical failure: 'ExtPluginReplicationError: Code 7749 - Sync Timeout with AlphaNode' in 'experimental-geo-sync-plugin v0.1.2' on db-primary.",
             "context": "System: Primary PostgreSQL Database (Version 15.3). Plugin: 'experimental-geo-sync-plugin v0.1.2' (third-party, integrated yesterday for PoC). Service: Attempting geo-replicated read-replica setup. Internal Documentation: Confirmed NO internal documentation or runbooks exist for this experimental plugin or its error codes. Vendor documentation for v0.1.2 is sparse."
@@ -230,11 +225,11 @@ if __name__ == "__main__":
         # If a final summarization or handoff message is needed from this agent, this section can be adapted.
         # For now, we'll comment it out to focus on the tool selection aspect.
         #
-        # orchestrator_agent.output_schema = FinalAnswerSchema
-        # orchestrator_agent.memory.add_message("system", response) # 'response' here is the tool's output
-        # final_answer = orchestrator_agent.run(input_schema) # This would re-run the LLM with the tool output in memory
-        # console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
-        # orchestrator_agent.output_schema = OrchestratorOutputSchema
+        orchestrator_agent.output_schema = FinalAnswerSchema
+        orchestrator_agent.memory.add_message("system", response) # 'response' here is the tool's output
+        final_answer = orchestrator_agent.run(input_schema) # This would re-run the LLM with the tool output in memory
+        console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
+        orchestrator_agent.output_schema = OrchestratorOutputSchema
 
         # Reset the memory after each response if you are doing multiple turns in the example
         orchestrator_agent.memory = AgentMemory()

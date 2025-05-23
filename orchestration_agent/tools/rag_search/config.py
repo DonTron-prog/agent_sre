@@ -14,4 +14,5 @@ class RAGSearchToolConfig(BaseToolConfig):
     embedding_model_name: str = Field("text-embedding-3-small", description="OpenAI embedding model name.")
     llm_model_name: str = Field("gpt-4o-mini", description="LLM model name for agents.")
     recreate_collection_on_init: bool = Field(True, description="Recreate ChromaDB collection on tool initialization.")
+    force_reload_documents: bool = Field(False, description="Force reloading and reindexing of documents even if collection already has content.")
     openai_api_key: Optional[str] = Field(None, description="OpenAI API key. If None, attempts to use OPENAI_API_KEY env var.")

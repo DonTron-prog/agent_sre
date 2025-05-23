@@ -9,6 +9,17 @@ from atomic_agents.lib.components.agent_memory import AgentMemory # Added for co
 
 from orchestration_agent.tools.rag_search.config import RAGSearchToolConfig
 from orchestration_agent.services.chroma_db import ChromaDBService
+import sys
+print(f"!!! DEBUG: Attempting to import ChromaDBService. Module path in sys.modules before import: {sys.modules.get('orchestration_agent.services.chroma_db', 'Not yet in sys.modules')}")
+print(f"!!! DEBUG: ChromaDBService imported. Type: {type(ChromaDBService)}")
+# Attempt to get the file path of the module where ChromaDBService is defined
+try:
+    import inspect
+    chroma_db_service_file = inspect.getfile(ChromaDBService)
+    print(f"!!! DEBUG: ChromaDBService is defined in file: {chroma_db_service_file}")
+except Exception as e:
+    print(f"!!! DEBUG: Could not determine file for ChromaDBService: {e}")
+
 from orchestration_agent.context_providers import RAGContextProvider, ChunkItem
 from orchestration_agent.agents.query_agent import create_query_agent, RAGQueryAgentInputSchema
 from orchestration_agent.agents.qa_agent import create_qa_agent, RAGQuestionAnsweringAgentInputSchema
@@ -55,12 +66,10 @@ class RAGSearchTool(BaseTool):
             persist_directory=config.persist_dir,
             recreate_collection=config.recreate_collection_on_init,
         )
-        
         self.document_processor = DocumentProcessor(
             chunk_size=config.chunk_size,
             chunk_overlap=config.chunk_overlap
         )
-        
         self._load_and_index_documents()
 
         client = instructor.from_openai(openai.OpenAI(api_key=self.api_key))
@@ -71,14 +80,26 @@ class RAGSearchTool(BaseTool):
         self.qa_agent = create_qa_agent(client, config.llm_model_name, self.rag_context_provider)
 
     def _load_and_index_documents(self):
-        all_chunks, all_metadatas = self.document_processor.load_and_index_documents(self.config.docs_dir)
+        # Check if collection already has documents
+        count = self.chroma_db.collection.count()
         
-        if all_chunks:
-            print(f"Adding {len(all_chunks)} chunks to ChromaDB...")
-            self.chroma_db.add_documents(documents=all_chunks, metadatas=all_metadatas)
-            print("Documents indexed successfully.")
+        # Only load and index if collection is empty OR force_reload_documents is True
+        if count == 0 or self.config.force_reload_documents:
+            if count > 0 and self.config.force_reload_documents:
+                print(f"Force reloading documents. Existing collection has {count} documents.")
+            else:
+                print("ChromaDB collection is empty. Loading and indexing documents...")
+            
+            all_chunks, all_metadatas = self.document_processor.load_and_index_documents(self.config.docs_dir)
+            
+            if all_chunks:
+                print(f"Adding {len(all_chunks)} chunks to ChromaDB...")
+                self.chroma_db.add_documents(documents=all_chunks, metadatas=all_metadatas)
+                print("Documents indexed successfully.")
+            else:
+                print("No chunks to index.")
         else:
-            print("No chunks to index.")
+            print(f"Using existing ChromaDB collection with {count} documents. Set force_reload_documents=True to reindex.")
 
     def run(self, params: RAGSearchToolInputSchema) -> RAGSearchToolOutputSchema:
         # 1. Generate semantic query

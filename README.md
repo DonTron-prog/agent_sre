@@ -2,8 +2,6 @@
 
 An intelligent Site Reliability Engineering (SRE) orchestration agent that analyzes system alerts and automatically selects the most appropriate investigation tool to gather relevant context and information for incident response.
 
-![SRE Agent Architecture](temp_image_1747876570470.png)
-
 ## Overview
 
 This SRE agent acts as an intelligent orchestrator that receives system alerts and their context, then decides which investigation tool will provide the most valuable information for understanding and resolving the incident. The agent can leverage internal knowledge bases, external web searches, or perform calculations to support incident response.
