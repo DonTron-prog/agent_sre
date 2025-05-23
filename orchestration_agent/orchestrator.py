@@ -28,6 +28,11 @@ from orchestration_agent.tools.rag_search import (
 import instructor
 from datetime import datetime
 from dotenv import load_dotenv
+import os 
+
+from rich.console import Console
+from rich.panel import Panel
+from rich.syntax import Syntax
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -78,44 +83,13 @@ class CurrentDateProvider(SystemPromptContextProviderBase):
     def get_info(self) -> str:
         return f"Current date in format YYYY-MM-DD: {self.date}"
 
-
-######################
-# ORCHESTRATOR AGENT #
-######################
-orchestrator_agent = BaseAgent(
-    BaseAgentConfig(
-        client=instructor.from_openai(openai.OpenAI()),
-        model="gpt-4o-mini",
-        system_prompt_generator=SystemPromptGenerator(
-            background=[
-                "You are an SRE Orchestrator Agent. Your primary role is to analyze a system alert and its associated context. Based on this analysis, you must decide which tool (RAG, web-search, or calculator) will provide the most valuable additional information or context for a subsequent reflection agent to understand and act upon the alert.",
-                "Use the RAG (Retrieval Augmented Generation) tool for querying internal SRE knowledge bases. This includes runbooks, incident histories, post-mortems, architectural diagrams, service dependencies, and internal documentation related to the alerted system or similar past issues.",
-                "Use the web-search tool for finding external information. This includes searching for specific error codes, CVEs (Common Vulnerabilities and Exposures), documentation for third-party software or services, status pages of external dependencies, or general troubleshooting guides from the broader internet.",
-                "Use the calculator tool if the alert involves specific metrics, thresholds, or requires calculations to determine severity, impact (e.g., error budget consumption), or trends.",
-            ],
-            output_instructions=[
-                "Carefully analyze the provided 'system_alert' and 'system_context'.",
-                "Determine if the most valuable next step is to: query internal knowledge (RAG), search for external information (web-search), or perform a calculation (calculator).",
-                "If RAG is chosen: use the 'rag' tool. Formulate a specific question for the RAG system based on the alert and context to retrieve relevant internal documentation (e.g., 'Find runbooks for high CPU on web servers', 'Retrieve incident history for ORA-12514 on payment_db').",
-                "If web-search is chosen: use the 'search' tool. Provide 1-3 concise and relevant search queries based on the alert and context (e.g., 'ORA-12514 TNS listener error Oracle', 'Kubernetes Pod CrashLoopBackOff OOMKilled troubleshooting').",
-                "If calculator is chosen: use the 'calculator' tool. Provide the mathematical expression needed (e.g., if latency increased from 50ms to 500ms, an expression could be '500 / 50' to find the factor of increase).",
-                "Format your output strictly according to the OrchestratorOutputSchema.",
-            ],
-        ),
-        input_schema=OrchestratorInputSchema,
-        output_schema=OrchestratorOutputSchema,
-    )
-)
-
-# Register the current date provider
-orchestrator_agent.register_context_provider("current_date", CurrentDateProvider("Current Date"))
-
-
+################
+# TOOL EXECUTION #
+################
 def execute_tool(
     searxng_tool: SearxNGSearchTool, calculator_tool: CalculatorTool, rag_tool: RAGSearchTool, orchestrator_output: OrchestratorOutputSchema
 ) -> Union[SearxNGSearchToolOutputSchema, CalculatorToolOutputSchema, RAGSearchToolOutputSchema]:
     if orchestrator_output.tool in ("search", "web-search"):
-        # Ensure the parameters are of the correct type for the tool
         if not isinstance(orchestrator_output.tool_parameters, SearxNGSearchToolInputSchema):
             raise ValueError(f"Invalid parameters for search tool: {orchestrator_output.tool_parameters}")
         return searxng_tool.run(orchestrator_output.tool_parameters)
@@ -130,50 +104,210 @@ def execute_tool(
     else:
         raise ValueError(f"Unknown tool: {orchestrator_output.tool}")
 
+###########################
+# REFACTORED FUNCTIONS    #
+###########################
 
-#################
-# EXAMPLE USAGE #
-#################
-if __name__ == "__main__":
-    import os
-    from dotenv import load_dotenv
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.syntax import Syntax
+def load_configuration():
+    """Load configuration settings from environment variables or config files."""
+    config = {
+        "openai_api_key": os.getenv("OPENAI_API_KEY"),
+        "model_name": os.getenv("MODEL_NAME", "gpt-4o-mini"),
+        "searxng_base_url": os.getenv("SEARXNG_BASE_URL", "http://localhost:8080"),
+        "knowledge_base_dir": os.path.join(os.path.dirname(__file__), "..", "knowledge_base_sre"),
+        "persist_dir": os.path.join(os.path.dirname(__file__), "..", "sre_chroma_db"),
+        "recreate_rag_collection": os.getenv("RECREATE_RAG_COLLECTION", "False").lower() == "true",
+        "force_reload_rag_docs": os.getenv("FORCE_RELOAD_RAG_DOCS", "False").lower() == "true",
+        "max_search_results": int(os.getenv("MAX_SEARCH_RESULTS", 3))
+    }
+    return config
 
-    load_dotenv()
+def setup_environment_and_client(config):
+    """Set up environment variables and initialize the OpenAI client."""
+    client = instructor.from_openai(openai.OpenAI(api_key=config["openai_api_key"]))
+    return client
 
-    # Set up the OpenAI client
-    client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
+def create_orchestrator_agent(client, model_name):
+    """Create and configure the orchestrator agent instance."""
+    system_prompt_generator = SystemPromptGenerator(
+        background=[
+            "You are an SRE Orchestrator Agent. Your primary role is to analyze a system alert and its associated context. Based on this analysis, you must decide which tool (RAG, web-search, or calculator) will provide the most valuable additional information or context for a subsequent reflection agent to understand and act upon the alert.",
+            "Use the RAG (Retrieval Augmented Generation) tool for querying internal SRE knowledge bases. This includes runbooks, incident histories, post-mortems, architectural diagrams, service dependencies, and internal documentation related to the alerted system or similar past issues.",
+            "Use the web-search tool for finding external information. This includes searching for specific error codes, CVEs (Common Vulnerabilities and Exposures), documentation for third-party software or services, status pages of external dependencies, or general troubleshooting guides from the broader internet.",
+            "Use the calculator tool if the alert involves specific metrics, thresholds, or requires calculations to determine severity, impact (e.g., error budget consumption), or trends.",
+        ],
+        output_instructions=[
+            "Carefully analyze the provided 'system_alert' and 'system_context'.",
+            "Determine if the most valuable next step is to: query internal knowledge (RAG), search for external information (web-search), or perform a calculation (calculator).",
+            "If RAG is chosen: use the 'rag' tool. Formulate a specific question for the RAG system based on the alert and context to retrieve relevant internal documentation (e.g., 'Find runbooks for high CPU on web servers', 'Retrieve incident history for ORA-12514 on payment_db').",
+            "If web-search is chosen: use the 'search' tool. Provide 1-3 concise and relevant search queries based on the alert and context (e.g., 'ORA-12514 TNS listener error Oracle', 'Kubernetes Pod CrashLoopBackOff OOMKilled troubleshooting').",
+            "If calculator is chosen: use the 'calculator' tool. Provide the mathematical expression needed (e.g., if latency increased from 50ms to 500ms, an expression could be '500 / 50' to find the factor of increase).",
+            "Format your output strictly according to the OrchestratorOutputSchema.",
+        ],
+    )
+    
+    agent = BaseAgent(
+        BaseAgentConfig(
+            client=client,
+            model=model_name,
+            system_prompt_generator=system_prompt_generator,
+            input_schema=OrchestratorInputSchema,
+            output_schema=OrchestratorOutputSchema,
+        )
+    )
+    
+    agent.register_context_provider("current_date", CurrentDateProvider("Current Date"))
+    
+    return agent
 
-    # Initialize the tools
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url="http://localhost:8080", max_results=3)) # Replace with your SearxNG instance
+def initialize_tools(config):
+    """Initialize all required tools with their configurations."""
+    searxng_tool = SearxNGSearchTool(
+        SearxNGSearchToolConfig(
+            base_url=config["searxng_base_url"], 
+            max_results=config["max_search_results"]
+        )
+    )
+    
     calculator_tool = CalculatorTool(CalculatorToolConfig())
-    # Configure RAG tool - create a knowledge_base directory in the SRE-agent folder or update path
-    # Ensure OPENAI_API_KEY is set in .env or environment
-    knowledge_base_dir = os.path.join(os.path.dirname(__file__), "..", "knowledge_base_sre")
-    print(f"!!! DEBUG 1")   
+    
     rag_tool_config = RAGSearchToolConfig(
-        docs_dir=knowledge_base_dir,
-        persist_dir=os.path.join(os.path.dirname(__file__), "..", "sre_chroma_db"),
-        recreate_collection_on_init=False, # Set to False after first run if you want to persist DB
-        force_reload_documents=False # Set to True if you want to force reindexing of documents
+        docs_dir=config["knowledge_base_dir"],
+        persist_dir=config["persist_dir"],
+        recreate_collection_on_init=config["recreate_rag_collection"],
+        force_reload_documents=config["force_reload_rag_docs"]
     )
     rag_tool = RAGSearchTool(config=rag_tool_config)
+    
+    return {
+        "searxng": searxng_tool,
+        "calculator": calculator_tool,
+        "rag": rag_tool
+    }
 
-    # Initialize Rich console
-    console = Console()
+def prepare_input_schema(alert_data):
+    """Convert raw alert data into a properly formatted input schema."""
+    return OrchestratorInputSchema(
+        system_alert=alert_data["alert"], 
+        system_context=alert_data["context"]
+    )
 
-    # Print the full system prompt
-    console.print(Panel(orchestrator_agent.system_prompt_generator.generate_prompt(), title="System Prompt", expand=False))
+def execute_orchestration_pipeline(agent, input_schema):
+    """Run the orchestrator agent to determine which tool to use."""
+    return agent.run(input_schema)
+
+def handle_tool_execution(orchestrator_output, tools):
+    """Execute the appropriate tool based on the orchestrator's decision."""
+    return execute_tool(
+        tools["searxng"], 
+        tools["calculator"], 
+        tools["rag"], 
+        orchestrator_output
+    )
+
+def generate_final_answer(agent, input_schema, tool_response):
+    """Generate a final answer based on the tool's output."""
+    original_schema = agent.output_schema
+    agent.output_schema = FinalAnswerSchema
+    
+    # Add the tool response directly to memory - don't convert to JSON string
+    agent.memory.add_message("system", tool_response)
+
+    final_answer_obj = agent.run(input_schema)
+    
+    agent.output_schema = original_schema
+    
+    return final_answer_obj
+
+def reset_agent_memory(agent):
+    """Reset the agent's memory for the next interaction."""
+    agent.memory = AgentMemory()
+
+def process_single_alert(agent, tools, alert_data, console, generate_final_answer_flag=False):
+    """Process a single alert through the complete orchestration pipeline."""
+    console.print(Panel(
+        f"[bold cyan]System Alert:[/bold cyan] {alert_data['alert']}\n"
+        f"[bold cyan]System Context:[/bold cyan] {alert_data['context']}",
+        expand=False
+    ))
+    
+    input_schema = prepare_input_schema(alert_data)
+    
+    console.print("\n[bold yellow]Generated Input Schema:[/bold yellow]")
+    input_syntax = Syntax(
+        str(input_schema.model_dump_json(indent=2)), 
+        "json", 
+        theme="monokai", 
+        line_numbers=True
+    )
+    console.print(input_syntax)
+    
+    orchestrator_output = execute_orchestration_pipeline(agent, input_schema)
+    
+    console.print("\n[bold magenta]Orchestrator Output:[/bold magenta]")
+    orchestrator_syntax = Syntax(
+        str(orchestrator_output.model_dump_json(indent=2)), 
+        "json", 
+        theme="monokai", 
+        line_numbers=True
+    )
+    console.print(orchestrator_syntax)
+    
+    tool_response = handle_tool_execution(orchestrator_output, tools)
+    
+    console.print("\n[bold green]Tool Output:[/bold green]")
+    output_syntax = Syntax(
+        str(tool_response.model_dump_json(indent=2)), 
+        "json", 
+        theme="monokai", 
+        line_numbers=True
+    )
+    console.print(output_syntax)
+    
+    console.print("\n" + "-" * 80 + "\n")
+    
+    if generate_final_answer_flag:
+        final_answer_obj = generate_final_answer(agent, input_schema, tool_response)
+        console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer_obj.final_answer}")
+    
+    reset_agent_memory(agent)
+
+def run_example_scenarios(agent, tools, example_data, console, generate_final_answer_flag=False):
+    """Run through a list of example scenarios."""
+    console.print(Panel(
+        agent.system_prompt_generator.generate_prompt(), 
+        title="System Prompt", 
+        expand=False
+    ))
     console.print("\n")
+    
+    for alert_input in example_data:
+        process_single_alert(
+            agent=agent,
+            tools=tools,
+            alert_data=alert_input,
+            console=console,
+            generate_final_answer_flag=generate_final_answer_flag
+        )
 
-    # Example inputs
-    inputs = [
-        #{
-        #    "alert": "High CPU utilization (95%) on server web-prod-01 for 15 minutes.",
-        #    "context": "System: Production Web Server Cluster (nginx, Python/Flask). Service: Main customer-facing website. Recent changes: New deployment v2.3.1 two hours ago. Known issues: Occasional spikes during peak load. Monitoring tool: Prometheus."
-        #},
+#######################
+# MAIN EXECUTION FLOW #
+#######################
+if __name__ == "__main__":
+    config = load_configuration()
+    
+    openai_client = setup_environment_and_client(config)
+    
+    agent = create_orchestrator_agent(
+        client=openai_client,
+        model_name=config["model_name"]
+    )
+    
+    tool_instances = initialize_tools(config)
+    
+    console_instance = Console()
+    
+    example_alerts = [
         {
             "alert": "Critical failure: 'ExtPluginReplicationError: Code 7749 - Sync Timeout with AlphaNode' in 'experimental-geo-sync-plugin v0.1.2' on db-primary.",
             "context": "System: Primary PostgreSQL Database (Version 15.3). Plugin: 'experimental-geo-sync-plugin v0.1.2' (third-party, integrated yesterday for PoC). Service: Attempting geo-replicated read-replica setup. Internal Documentation: Confirmed NO internal documentation or runbooks exist for this experimental plugin or its error codes. Vendor documentation for v0.1.2 is sparse."
@@ -187,49 +321,11 @@ if __name__ == "__main__":
             "context": "System: API Gateway (Kong) and backend OrderService. Service: Order placement. Dependencies: InventoryService, PaymentService. Current error rate threshold: < 1%. Latency SLO: P99 < 800ms."
         }
     ]
-
-    for item_input in inputs:
-        console.print(Panel(f"[bold cyan]System Alert:[/bold cyan] {item_input['alert']}\n[bold cyan]System Context:[/bold cyan] {item_input['context']}", expand=False))
-
-        # Create the input schema
-        input_schema = OrchestratorInputSchema(system_alert=item_input["alert"], system_context=item_input["context"])
-
-        # Print the input schema
-        console.print("\n[bold yellow]Generated Input Schema:[/bold yellow]")
-        input_syntax = Syntax(str(input_schema.model_dump_json(indent=2)), "json", theme="monokai", line_numbers=True)
-        console.print(input_syntax)
-
-        # Run the orchestrator to get the tool selection and input
-        orchestrator_output = orchestrator_agent.run(input_schema)
-
-        # Print the orchestrator output
-        console.print("\n[bold magenta]Orchestrator Output:[/bold magenta]")
-        orchestrator_syntax = Syntax(
-            str(orchestrator_output.model_dump_json(indent=2)), "json", theme="monokai", line_numbers=True
-        )
-        console.print(orchestrator_syntax)
-
-        # Run the selected tool
-        response = execute_tool(searxng_tool, calculator_tool, rag_tool, orchestrator_output)
-
-        # Print the tool output
-        console.print("\n[bold green]Tool Output:[/bold green]")
-        output_syntax = Syntax(str(response.model_dump_json(indent=2)), "json", theme="monokai", line_numbers=True)
-        console.print(output_syntax)
-
-        console.print("\n" + "-" * 80 + "\n")
-
-        # The SRE orchestrator's primary output is the tool choice and its parameters.
-        # The output of the selected tool will be consumed by a subsequent reflection agent.
-        # Therefore, generating a "final_answer" here might not be necessary for the SRE pipeline.
-        # If a final summarization or handoff message is needed from this agent, this section can be adapted.
-        # For now, we'll comment it out to focus on the tool selection aspect.
-        #
-        orchestrator_agent.output_schema = FinalAnswerSchema
-        orchestrator_agent.memory.add_message("system", response) # 'response' here is the tool's output
-        final_answer = orchestrator_agent.run(input_schema) # This would re-run the LLM with the tool output in memory
-        console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
-        orchestrator_agent.output_schema = OrchestratorOutputSchema
-
-        # Reset the memory after each response if you are doing multiple turns in the example
-        orchestrator_agent.memory = AgentMemory()
+    
+    run_example_scenarios(
+        agent=agent,
+        tools=tool_instances,
+        example_data=example_alerts,
+        console=console_instance,
+        generate_final_answer_flag=True
+    )
