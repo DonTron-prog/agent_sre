@@ -21,7 +21,7 @@ from .tool import (
     DeepResearchToolInputSchema,
     DeepResearchToolOutputSchema,
 )
-from .dr_main import perform_deep_research, display_research_results
+from .utils import perform_deep_research, display_research_results
 
 __all__ = [
     "DeepResearchTool",
