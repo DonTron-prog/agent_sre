@@ -128,14 +128,24 @@ class DocumentProcessor:
             file_paths.extend(glob.glob(os.path.join(docs_dir, "**", ext), recursive=True))
 
         if not file_paths:
-            print(f"No documents found in {docs_dir} with supported extensions.")
+            print(f"!!! DEBUG: No documents found in {docs_dir} with supported extensions.")
             return [], []
 
-        print(f"Found {len(file_paths)} documents to process.")
+        print(f"!!! DEBUG: Found {len(file_paths)} documents to process.")
         for file_path in file_paths:
-            print(f"Processing {file_path}...")
+            print(f"!!! DEBUG: Processing {file_path}...")
             chunks, metadatas = self._load_and_process_file(file_path)
+            print(f"!!! DEBUG: Generated {len(chunks)} chunks from {file_path}")
+            
+            # Check for duplicate chunks
+            chunk_set = set(chunks)
+            if len(chunk_set) < len(chunks):
+                print(f"!!! DEBUG: WARNING - Found {len(chunks) - len(chunk_set)} duplicate chunks in {file_path}")
+            
             all_chunks.extend(chunks)
             all_metadatas.extend(metadatas)
+        
+        print(f"!!! DEBUG: Total chunks generated: {len(all_chunks)}")
+        print(f"!!! DEBUG: Number of unique chunks: {len(set(all_chunks))}")
         
         return all_chunks, all_metadatas

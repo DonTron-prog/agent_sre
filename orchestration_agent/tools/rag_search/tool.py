@@ -10,19 +10,9 @@ from atomic_agents.lib.components.agent_memory import AgentMemory # Added for co
 from orchestration_agent.tools.rag_search.config import RAGSearchToolConfig
 from orchestration_agent.services.chroma_db import ChromaDBService
 import sys
-print(f"!!! DEBUG: Attempting to import ChromaDBService. Module path in sys.modules before import: {sys.modules.get('orchestration_agent.services.chroma_db', 'Not yet in sys.modules')}")
-print(f"!!! DEBUG: ChromaDBService imported. Type: {type(ChromaDBService)}")
-# Attempt to get the file path of the module where ChromaDBService is defined
-try:
-    import inspect
-    chroma_db_service_file = inspect.getfile(ChromaDBService)
-    print(f"!!! DEBUG: ChromaDBService is defined in file: {chroma_db_service_file}")
-except Exception as e:
-    print(f"!!! DEBUG: Could not determine file for ChromaDBService: {e}")
-
-from orchestration_agent.context_providers import RAGContextProvider, ChunkItem
-from orchestration_agent.agents.query_agent import create_query_agent, RAGQueryAgentInputSchema
-from orchestration_agent.agents.qa_agent import create_qa_agent, RAGQuestionAnsweringAgentInputSchema
+from orchestration_agent.tools.rag_search.rag_context_providers import RAGContextProvider, ChunkItem
+from orchestration_agent.agents.rag_query_agent import create_query_agent, RAGQueryAgentInputSchema
+from orchestration_agent.agents.rag_qa_agent import create_qa_agent, RAGQuestionAnsweringAgentInputSchema
 from orchestration_agent.tools.rag_search.document_processor import DocumentProcessor
 
 # --- Schemas ---
@@ -55,6 +45,7 @@ class RAGSearchTool(BaseTool):
     def __init__(self, config: RAGSearchToolConfig = RAGSearchToolConfig()):
         super().__init__(config)
         self.config = config
+        
         self.api_key = config.openai_api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OpenAI API key not found. Please set OPENAI_API_KEY environment variable or pass via config.")
@@ -66,10 +57,12 @@ class RAGSearchTool(BaseTool):
             persist_directory=config.persist_dir,
             recreate_collection=config.recreate_collection_on_init,
         )
+        
         self.document_processor = DocumentProcessor(
             chunk_size=config.chunk_size,
             chunk_overlap=config.chunk_overlap
         )
+        
         self._load_and_index_documents()
 
         client = instructor.from_openai(openai.OpenAI(api_key=self.api_key))
@@ -78,50 +71,88 @@ class RAGSearchTool(BaseTool):
         
         self.rag_context_provider = RAGContextProvider("Retrieved Document Chunks")
         self.qa_agent = create_qa_agent(client, config.llm_model_name, self.rag_context_provider)
+        
 
     def _load_and_index_documents(self):
-        # Check if collection already has documents
+        # Check if collection already has documents or if a reload is forced
         count = self.chroma_db.collection.count()
         
-        # Only load and index if collection is empty OR force_reload_documents is True
         if count == 0 or self.config.force_reload_documents:
-            if count > 0 and self.config.force_reload_documents:
-                print(f"Force reloading documents. Existing collection has {count} documents.")
-            else:
-                print("ChromaDB collection is empty. Loading and indexing documents...")
-            
             all_chunks, all_metadatas = self.document_processor.load_and_index_documents(self.config.docs_dir)
             
             if all_chunks:
-                print(f"Adding {len(all_chunks)} chunks to ChromaDB...")
                 self.chroma_db.add_documents(documents=all_chunks, metadatas=all_metadatas)
-                print("Documents indexed successfully.")
-            else:
-                print("No chunks to index.")
-        else:
-            print(f"Using existing ChromaDB collection with {count} documents. Set force_reload_documents=True to reindex.")
+        # If documents exist and force_reload is false, do nothing and use existing collection.
 
     def run(self, params: RAGSearchToolInputSchema) -> RAGSearchToolOutputSchema:
         # 1. Generate semantic query
         query_agent_input = RAGQueryAgentInputSchema(user_message=params.query)
         query_output = self.query_agent.run(query_agent_input)
         semantic_query = query_output.query
-        print(f"Generated semantic query: {semantic_query}")
 
         # 2. Retrieve relevant chunks
-        search_results = self.chroma_db.query(query_text=semantic_query, n_results=self.config.num_chunks_to_retrieve)
+        search_results = self.chroma_db.query(
+            query_text=semantic_query,
+            n_results=self.config.num_chunks_to_retrieve  # Request significantly more to ensure diversity
+        )
+        
+
         
         retrieved_chunks_for_context = []
         output_results = []
-
+        
+        # Process results to get unique chunks by content
+        added_content = set()
         if search_results["documents"]:
-            for doc, meta, dist_val in zip(search_results["documents"], search_results["metadatas"], search_results["distances"]):
-                retrieved_chunks_for_context.append(ChunkItem(content=doc, metadata=meta))
-                output_results.append(RAGSearchResultItemSchema(content=doc, source=meta.get("source", "N/A"), distance=dist_val, metadata=meta))
+            # Use zip to process all result components together
+            for doc, doc_id, dist_val, meta in zip(
+                search_results["documents"],
+                search_results["ids"],
+                search_results["distances"],
+                search_results["metadatas"]
+            ):
+                if doc not in added_content:
+                    # Create ChunkItem with all metadata including ID and distance
+                    chunk_item = ChunkItem(
+                        content=doc,
+                        metadata={
+                            "chunk_id": doc_id,
+                            "distance": dist_val,
+                            "source": meta.get("source", "N/A"),
+                            "file_name": meta.get("file_name", ""),
+                            **meta  # Include all other metadata
+                        }
+                    )
+                    retrieved_chunks_for_context.append(chunk_item)
+                    
+                    # Create result schema object
+                    output_results.append(
+                        RAGSearchResultItemSchema(
+                            content=doc,
+                            source=meta.get("source", "N/A"),
+                            distance=dist_val,
+                            metadata=meta
+                        )
+                    )
+                    added_content.add(doc)
+                
+                # Limit to requested number of unique chunks
+                if len(output_results) >= self.config.num_chunks_to_retrieve:
+                    break
         
-        self.rag_context_provider.chunks = retrieved_chunks_for_context
+        self.rag_context_provider.chunks = retrieved_chunks_for_context # This should ideally also be unique
         
-        if not retrieved_chunks_for_context:
+        # Update retrieved_chunks_for_context to only contain unique items for the QA agent
+        # This ensures the QA agent also works with the unique set if it relies on self.rag_context_provider.chunks directly
+        unique_retrieved_chunks_for_context = []
+        seen_context_content = set()
+        for chunk_item in retrieved_chunks_for_context:
+            if chunk_item.content not in seen_context_content:
+                unique_retrieved_chunks_for_context.append(chunk_item)
+                seen_context_content.add(chunk_item.content)
+        self.rag_context_provider.chunks = unique_retrieved_chunks_for_context
+
+        if not output_results: # Changed from retrieved_chunks_for_context to output_results
             print("No relevant chunks found.")
             return RAGSearchToolOutputSchema(
                 query=params.query,

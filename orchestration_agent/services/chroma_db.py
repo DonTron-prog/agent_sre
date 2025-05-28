@@ -22,15 +22,18 @@ class ChromaDBService:
         
         self.embedding_function = OpenAIEmbeddingFunction(api_key=self.api_key, model_name=embedding_model_name)
 
+        # If recreating, delete the entire persist directory
         if recreate_collection and os.path.exists(persist_directory):
             shutil.rmtree(persist_directory)
         os.makedirs(persist_directory, exist_ok=True)
 
         self.client = chromadb.PersistentClient(path=persist_directory)
+        
+        # Explicitly set distance metric to cosine similarity
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
+            metadata={"hnsw:space": "cosine"},  # Explicitly set distance metric
         )
 
     def add_documents(self, documents: List[str], metadatas: List[Dict[str, str]], ids: Optional[List[str]] = None, batch_size: int = 100) -> List[str]:
@@ -56,20 +59,48 @@ class ChromaDBService:
 
         return all_added_ids
 
-    def query(self, query_text: str, n_results: int = 5) -> Dict:
-        count = self.collection.count()
-        if count == 0:
-            return {"documents": [[]], "metadatas": [[]], "distances": [[]], "ids": [[]]} # Chroma returns list of lists
+    def query(self, query_text: str, n_results: int = 5, where: Optional[Dict[str, str]] = None) -> Dict:
+        """Query the collection for similar documents.
+        
+        Args:
+            query_text: Text to find similar documents for
+            n_results: Number of results to return
+            where: Optional filter criteria
             
+        Returns:
+            Dictionary containing documents, metadata, distances and IDs
+        """
+        count = self.collection.count()
+        
+        if count == 0:
+            return {"documents": [], "metadatas": [], "distances": [], "ids": []}
+        
+        # Ensure n_results is at least 1 and at most the number of documents
+        adjusted_n_results = max(1, min(n_results, count))
+        
+        # Use include_values=True to get the actual embeddings
         results = self.collection.query(
             query_texts=[query_text],
-            n_results=min(n_results, count),
-            include=["documents", "metadatas", "distances"],
+            n_results=adjusted_n_results,
+            where=where,
+            include=["documents", "metadatas", "distances", "embeddings"],
         )
+        
+        # Debug the raw results
+        if results['documents']:
+            
+            # Check for duplicate documents
+            if len(results['documents'][0]) > 0:
+                unique_docs = set(results['documents'][0])
+                if len(unique_docs) < len(results['documents'][0]):
+                    pass
+        
         # Ensure results are properly unpacked if query_texts was a list of one item
-        return {
+        unpacked_results = {
             "documents": results["documents"][0] if results["documents"] else [],
             "metadatas": results["metadatas"][0] if results["metadatas"] else [],
             "distances": results["distances"][0] if results["distances"] else [],
             "ids": results["ids"][0] if results["ids"] else [],
         }
+        
+        return unpacked_results

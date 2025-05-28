@@ -24,6 +24,12 @@ from orchestration_agent.tools.rag_search import (
     RAGSearchToolInputSchema,
     RAGSearchToolOutputSchema
 )
+from orchestration_agent.tools.deep_research import (
+    DeepResearchTool,
+    DeepResearchToolConfig,
+    DeepResearchToolInputSchema,
+    DeepResearchToolOutputSchema,
+)
 
 import instructor
 from datetime import datetime
@@ -49,8 +55,8 @@ class OrchestratorInputSchema(BaseIOSchema):
 class OrchestratorOutputSchema(BaseIOSchema):
     """Combined output schema for the Orchestrator Agent. Contains the tool to use and its parameters."""
 
-    tool: str = Field(..., description="The tool to use: 'search', 'calculator', or 'rag'")
-    tool_parameters: Union[SearxNGSearchToolInputSchema, CalculatorToolInputSchema, RAGSearchToolInputSchema] = Field(
+    tool: str = Field(..., description="The tool to use: 'search', 'calculator', 'rag', or 'deep-research'")
+    tool_parameters: Union[SearxNGSearchToolInputSchema, CalculatorToolInputSchema, RAGSearchToolInputSchema, DeepResearchToolInputSchema] = Field(
         ..., description="The parameters for the selected tool"
     )
 
@@ -70,6 +76,7 @@ class OrchestratorAgentConfig(BaseAgentConfig):
     searxng_config: SearxNGSearchToolConfig
     calculator_config: CalculatorToolConfig
     rag_config: RAGSearchToolConfig
+    deep_research_config: DeepResearchToolConfig
 
 
 #####################
@@ -87,8 +94,8 @@ class CurrentDateProvider(SystemPromptContextProviderBase):
 # TOOL EXECUTION #
 ################
 def execute_tool(
-    searxng_tool: SearxNGSearchTool, calculator_tool: CalculatorTool, rag_tool: RAGSearchTool, orchestrator_output: OrchestratorOutputSchema
-) -> Union[SearxNGSearchToolOutputSchema, CalculatorToolOutputSchema, RAGSearchToolOutputSchema]:
+    searxng_tool: SearxNGSearchTool, calculator_tool: CalculatorTool, rag_tool: RAGSearchTool, deep_research_tool: DeepResearchTool, orchestrator_output: OrchestratorOutputSchema
+) -> Union[SearxNGSearchToolOutputSchema, CalculatorToolOutputSchema, RAGSearchToolOutputSchema, DeepResearchToolOutputSchema]:
     if orchestrator_output.tool in ("search", "web-search"):
         if not isinstance(orchestrator_output.tool_parameters, SearxNGSearchToolInputSchema):
             raise ValueError(f"Invalid parameters for search tool: {orchestrator_output.tool_parameters}")
@@ -101,11 +108,15 @@ def execute_tool(
         if not isinstance(orchestrator_output.tool_parameters, RAGSearchToolInputSchema):
             raise ValueError(f"Invalid parameters for RAG tool: {orchestrator_output.tool_parameters}")
         return rag_tool.run(orchestrator_output.tool_parameters)
+    elif orchestrator_output.tool == "deep-research":
+        if not isinstance(orchestrator_output.tool_parameters, DeepResearchToolInputSchema):
+            raise ValueError(f"Invalid parameters for deep research tool: {orchestrator_output.tool_parameters}")
+        return deep_research_tool.run(orchestrator_output.tool_parameters)
     else:
         raise ValueError(f"Unknown tool: {orchestrator_output.tool}")
 
 ###########################
-# REFACTORED FUNCTIONS    #
+# ORCHESTRATOR FUNCTIONS  #
 ###########################
 
 def load_configuration():
@@ -131,16 +142,18 @@ def create_orchestrator_agent(client, model_name):
     """Create and configure the orchestrator agent instance."""
     system_prompt_generator = SystemPromptGenerator(
         background=[
-            "You are an SRE Orchestrator Agent. Your primary role is to analyze a system alert and its associated context. Based on this analysis, you must decide which tool (RAG, web-search, or calculator) will provide the most valuable additional information or context for a subsequent reflection agent to understand and act upon the alert.",
+            "You are an SRE Orchestrator Agent. Your primary role is to analyze a system alert and its associated context. Based on this analysis, you must decide which tool (RAG, web-search, deep-research, or calculator) will provide the most valuable additional information or context for a subsequent reflection agent to understand and act upon the alert.",
             "Use the RAG (Retrieval Augmented Generation) tool for querying internal SRE knowledge bases. This includes runbooks, incident histories, post-mortems, architectural diagrams, service dependencies, and internal documentation related to the alerted system or similar past issues.",
             "Use the web-search tool for finding external information. This includes searching for specific error codes, CVEs (Common Vulnerabilities and Exposures), documentation for third-party software or services, status pages of external dependencies, or general troubleshooting guides from the broader internet.",
+            "Use the deep-research tool when you need comprehensive, multi-source research on complex topics. This tool automatically generates multiple search queries, scrapes content from multiple sources, and synthesizes comprehensive answers. Use this for complex troubleshooting scenarios, emerging technologies, or when you need detailed analysis of unfamiliar systems or error patterns.",
             "Use the calculator tool if the alert involves specific metrics, thresholds, or requires calculations to determine severity, impact (e.g., error budget consumption), or trends.",
         ],
         output_instructions=[
             "Carefully analyze the provided 'system_alert' and 'system_context'.",
-            "Determine if the most valuable next step is to: query internal knowledge (RAG), search for external information (web-search), or perform a calculation (calculator).",
+            "Determine if the most valuable next step is to: query internal knowledge (RAG), search for external information (web-search), perform comprehensive research (deep-research), or perform a calculation (calculator).",
             "If RAG is chosen: use the 'rag' tool. Formulate a specific question for the RAG system based on the alert and context to retrieve relevant internal documentation (e.g., 'Find runbooks for high CPU on web servers', 'Retrieve incident history for ORA-12514 on payment_db').",
             "If web-search is chosen: use the 'search' tool. Provide 1-3 concise and relevant search queries based on the alert and context (e.g., 'ORA-12514 TNS listener error Oracle', 'Kubernetes Pod CrashLoopBackOff OOMKilled troubleshooting').",
+            "If deep-research is chosen: use the 'deep-research' tool. Provide a comprehensive research question that requires analysis of multiple sources and synthesis of information (e.g., 'Research ExtPluginReplicationError Code 7749 in experimental-geo-sync-plugin v0.1.2 and provide troubleshooting guidance', 'Analyze Java OutOfMemoryError patterns in Kubernetes microservices and provide resolution strategies').",
             "If calculator is chosen: use the 'calculator' tool. Provide the mathematical expression needed (e.g., if latency increased from 50ms to 500ms, an expression could be '500 / 50' to find the factor of increase).",
             "Format your output strictly according to the OrchestratorOutputSchema.",
         ],
@@ -164,7 +177,7 @@ def initialize_tools(config):
     """Initialize all required tools with their configurations."""
     searxng_tool = SearxNGSearchTool(
         SearxNGSearchToolConfig(
-            base_url=config["searxng_base_url"], 
+            base_url=config["searxng_base_url"],
             max_results=config["max_search_results"]
         )
     )
@@ -179,10 +192,18 @@ def initialize_tools(config):
     )
     rag_tool = RAGSearchTool(config=rag_tool_config)
     
+    deep_research_tool = DeepResearchTool(
+        DeepResearchToolConfig(
+            searxng_base_url=config["searxng_base_url"],
+            max_search_results=config["max_search_results"]
+        )
+    )
+    
     return {
         "searxng": searxng_tool,
         "calculator": calculator_tool,
-        "rag": rag_tool
+        "rag": rag_tool,
+        "deep_research": deep_research_tool
     }
 
 def prepare_input_schema(alert_data):
@@ -199,9 +220,10 @@ def execute_orchestration_pipeline(agent, input_schema):
 def handle_tool_execution(orchestrator_output, tools):
     """Execute the appropriate tool based on the orchestrator's decision."""
     return execute_tool(
-        tools["searxng"], 
-        tools["calculator"], 
-        tools["rag"], 
+        tools["searxng"],
+        tools["calculator"],
+        tools["rag"],
+        tools["deep_research"],
         orchestrator_output
     )
 
@@ -210,7 +232,6 @@ def generate_final_answer(agent, input_schema, tool_response):
     original_schema = agent.output_schema
     agent.output_schema = FinalAnswerSchema
     
-    # Add the tool response directly to memory - don't convert to JSON string
     agent.memory.add_message("system", tool_response)
 
     final_answer_obj = agent.run(input_schema)
@@ -319,7 +340,15 @@ if __name__ == "__main__":
         {
             "alert": "API endpoint /api/v2/orders returning 503 Service Unavailable for 5% of requests over the last 10 minutes. Latency P99 is 2500ms.",
             "context": "System: API Gateway (Kong) and backend OrderService. Service: Order placement. Dependencies: InventoryService, PaymentService. Current error rate threshold: < 1%. Latency SLO: P99 < 800ms."
+        },
+        {
+            "alert": "Unusual network traffic pattern detected: 'TLS handshake failures increased by 400% from external IPs in APAC region' affecting load balancer 'prod-lb-01'.",
+            "context": "System: Production Load Balancer (HAProxy 2.4). Service: Frontend traffic distribution. Recent changes: SSL certificate renewal completed 2 hours ago. Geographic pattern: 85% of failures from previously unseen IP ranges in Asia-Pacific. No internal documentation exists for this specific failure pattern or geographic correlation analysis."
         }
+        #{
+        #    "alert": "High CPU utilization (95%) on server web-prod-01 for 15 minutes.",
+        #    "context": "System: Production Web Server Cluster (nginx, Python/Flask). Service: Main customer-facing website. Recent changes: New deployment v2.3.1 two hours ago. Known issues: Occasional spikes during peak load. Monitoring tool: Prometheus."
+        #},
     ]
     
     run_example_scenarios(

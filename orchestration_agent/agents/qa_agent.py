@@ -1,50 +1,63 @@
-import openai
 import instructor
+import openai
 from pydantic import Field
-
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from orchestration_agent.context_providers import RAGContextProvider # Adjusted import
 
-class RAGQuestionAnsweringAgentInputSchema(BaseIOSchema):
-    """Input schema for the RAG QA agent, taking the user's question."""
-    question: str = Field(..., description="The user's question to answer")
+from orchestration_agent.tools.deep_research.config import ChatConfig
 
-class RAGQuestionAnsweringAgentOutputSchema(BaseIOSchema):
-    """Output schema for the RAG QA agent, providing the answer and reasoning."""
-    reasoning: str = Field(..., description="The reasoning process leading up to the final answer")
-    answer: str = Field(..., description="The answer to the user's question based on the retrieved context")
 
-def create_qa_agent(client: instructor.Instructor, model_name: str, rag_context_provider: RAGContextProvider) -> BaseAgent:
-    qa_agent = BaseAgent(
-        BaseAgentConfig(
-            client=client,
-            model=model_name,
-            system_prompt_generator=SystemPromptGenerator(
-                background=[
-                    "You are an expert at answering questions using retrieved context chunks from a RAG system.",
-                    "Your role is to synthesize information from the chunks to provide accurate, well-supported answers.",
-                    "You must explain your reasoning process before providing the answer.",
-                ],
-                steps=[
-                    "1. Analyze the question and available context chunks.",
-                    "2. Identify the most relevant information in the chunks.",
-                    "3. Explain how you'll use this information to answer the question.",
-                    "4. Synthesize information into a coherent answer.",
-                ],
-                output_instructions=[
-                    "First explain your reasoning process clearly.",
-                    "Then provide a clear, direct answer based on the context.",
-                    "If context is insufficient, state this in your reasoning and answer 'I don't have enough information to answer this question based on the provided documents.'",
-                    "Never make up information not present in the chunks.",
-                    "Focus on being accurate and concise.",
-                ],
-            ),
-            input_schema=RAGQuestionAnsweringAgentInputSchema,
-            output_schema=RAGQuestionAnsweringAgentOutputSchema,
-            memory=AgentMemory(max_messages=5)
-        )
+class QuestionAnsweringAgentInputSchema(BaseIOSchema):
+    """This is the input schema for the QuestionAnsweringAgent."""
+
+    question: str = Field(..., description="The question to answer.")
+
+
+class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
+    """This is the output schema for the QuestionAnsweringAgent."""
+
+    answer: str = Field(..., description="The answer to the question.")
+    follow_up_questions: list[str] = Field(
+        ...,
+        description=(
+            "Specific questions about the topic that would help the user learn more details about the subject matter. "
+            "For example, if discussing a Nobel Prize winner, suggest questions about their research, impact, or "
+            "related scientific concepts."
+        ),
     )
-    qa_agent.register_context_provider("rag_context", rag_context_provider)
-    return qa_agent
+
+
+question_answering_agent = BaseAgent(
+    BaseAgentConfig(
+        client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
+        model=ChatConfig.model,
+        system_prompt_generator=SystemPromptGenerator(
+            background=[
+                "You are an expert question answering agent focused on providing factual information and encouraging deeper topic exploration.",
+                "For general greetings or non-research questions, provide relevant questions about the system's capabilities and research functions.",
+            ],
+            steps=[
+                "Analyze the question and identify the core topic",
+                "Answer the question using available information",
+                "For topic-specific questions, generate follow-up questions that explore deeper aspects of the same topic",
+                "For general queries about the system, suggest questions about research capabilities and functionality",
+            ],
+            output_instructions=[
+                "Answer in a direct, informative manner",
+                "NEVER generate generic conversational follow-ups like 'How are you?' or 'What would you like to know?'",
+                "For topic questions, follow-up questions MUST be about specific aspects of that topic",
+                "For system queries, follow-up questions should be about specific research capabilities",
+                "Example good follow-ups for a Nobel Prize question:",
+                "- What specific discoveries led to their Nobel Prize?",
+                "- How has their research influenced their field?",
+                "- What other scientists collaborated on this research?",
+                "Example good follow-ups for system queries:",
+                "- What types of sources do you use for research?",
+                "- How do you verify information accuracy?",
+                "- What are the limitations of your search capabilities?",
+            ],
+        ),
+        input_schema=QuestionAnsweringAgentInputSchema,
+        output_schema=QuestionAnsweringAgentOutputSchema,
+    )
+)
