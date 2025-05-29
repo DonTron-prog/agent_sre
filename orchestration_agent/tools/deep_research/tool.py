@@ -88,19 +88,53 @@ class DeepResearchTool(BaseTool):
         # Perform the search
         search_results = self.searxng_tool.run(SearxNGSearchToolInputSchema(queries=queries))
         
-        # Scrape content from search results
+        # Scrape content from search results with token/character limit
         content_items = []
-        for result in search_results.results[:max_results]:
+        MAX_TOTAL_CHARS = 380000  # ~95,000 tokens (leaving buffer for system prompt)
+        current_char_count = 0
+        results_processed = 0
+        
+        for result in search_results.results:
+            # Check if we've hit either limit
+            if results_processed >= max_results:
+                print(f"Stopped at max_results limit: {max_results}")
+                break
+                
             try:
                 scraped_content = self.webpage_scraper_tool.run(
                     WebpageScraperToolInputSchema(url=result.url, include_links=True)
                 )
+                
+                content_length = len(scraped_content.content)
+                
+                # Check if adding this content would exceed token limit
+                if current_char_count + content_length > MAX_TOTAL_CHARS:
+                    # Try to fit partial content
+                    remaining_chars = MAX_TOTAL_CHARS - current_char_count
+                    if remaining_chars > 5000:  # Only if meaningful space left
+                        truncated_content = scraped_content.content[:remaining_chars]
+                        # Try to end at sentence boundary
+                        last_period = truncated_content.rfind('.')
+                        if last_period > remaining_chars * 0.8:
+                            truncated_content = truncated_content[:last_period + 1]
+                        
+                        content_items.append(ContentItem(content=truncated_content, url=result.url))
+                        print(f"Stopped at token limit: ~{MAX_TOTAL_CHARS//4} tokens (partial content from {result.url})")
+                    else:
+                        print(f"Stopped at token limit: ~{MAX_TOTAL_CHARS//4} tokens")
+                    break
+                
+                # Add full content
                 content_items.append(ContentItem(content=scraped_content.content, url=result.url))
+                current_char_count += content_length
+                results_processed += 1
+                
             except Exception as e:
                 # Skip failed scrapes but continue with others
                 print(f"Failed to scrape {result.url}: {e}")
                 continue
         
+        print(f"Processed {results_processed} results, total chars: {current_char_count} (~{current_char_count//4} tokens)")
         return content_items
     
     def _should_perform_new_search(self, research_query: str) -> bool:
