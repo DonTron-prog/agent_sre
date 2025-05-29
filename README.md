@@ -10,22 +10,16 @@ This SRE agent acts as an intelligent orchestrator that receives system alerts a
 
 ## Features
 
-- **Intelligent Tool Selection**: Automatically chooses between RAG search, web search, or calculator tools based on alert analysis
-- **RAG-Powered Knowledge Base**: Searches internal SRE documentation, runbooks, incident histories, and post-mortems
-- **External Information Retrieval**: Uses SearxNG to search for error codes, CVEs, documentation, and troubleshooting guides
-- **Metric Calculations**: Performs calculations for error budgets, impact analysis, and trend evaluation
+- **Intelligent Tool Selection**: Automatically chooses between RAG search, web search, deep research, or calculator tools based on alert analysis
+- **RAG-Powered Knowledge Base**: Searches internal SRE documentation, (add documents to `./knowledge_base_sre`)
+- **External Information Retrieval**: Uses SearxNG to search for error alerts
+- **Deep Research Capabilities**: Multi-step research tool that generates search queries, scrapes content, and provides comprehensive analysis with follow-up questions
+- **Metric Calculations**: Performs calculations
 - **Rich Alert Context Processing**: Handles complex system alerts with detailed contextual information
-- **Real-time Investigation**: Provides immediate tool selection and parameter generation for rapid incident response
 
 ## Alert Investigation Capabilities
 
-The agent specializes in analyzing various types of system alerts:
-
-- **Performance Issues**: High CPU/memory utilization, latency spikes, throughput degradation
-- **Service Failures**: API errors, database connection issues, microservice crashes
-- **Infrastructure Problems**: Kubernetes pod failures, container issues, network connectivity
-- **Security Incidents**: Authentication failures, suspicious activity, vulnerability alerts
-- **Dependency Issues**: External service outages, third-party integration failures
+The agent is a POC and might need specialization depending on types of system alerts.
 
 ## Tools
 
@@ -46,6 +40,24 @@ The agent specializes in analyzing various types of system alerts:
   - Searching for third-party software documentation
   - Checking external service status pages
   - Finding community troubleshooting guides
+
+### Deep Research Tool
+- **Purpose**: Perform comprehensive, multi-step research on complex topics by combining web search, content scraping, and AI analysis
+- **Use Cases**:
+  - Investigating complex system issues that require multiple information sources
+  - Researching new technologies, vulnerabilities, or best practices
+  - Gathering comprehensive context for incident analysis
+  - Following up on initial findings with deeper investigation
+  - Analyzing trends and patterns across multiple sources
+
+**Key Features**:
+- **Intelligent Query Generation**: Automatically generates multiple relevant search queries from a research topic
+- **Multi-Source Content Scraping**: Scrapes and analyzes content from multiple web sources
+- **Context-Aware Research**: Determines whether new searches are needed based on existing context
+- **Comprehensive Analysis**: Provides detailed answers with follow-up questions for further investigation
+- **Source Tracking**: Maintains references to all sources used in the research
+
+**Interactive Mode**: The tool includes an interactive research session mode for exploratory investigation.
 
 ### Calculator Tool
 - **Purpose**: Perform mathematical calculations for SRE metrics
@@ -156,6 +168,24 @@ python orchestration_agent/orchestrator.py
 
 The agent will process several example alerts and demonstrate tool selection for each scenario.
 
+### Running Tools Standalone
+
+#### Deep Research Tool
+For interactive research sessions:
+```bash
+python orchestration_agent/tools/deep_research/interactive.py
+```
+
+This launches an interactive research session where you can ask research questions and get comprehensive answers with sources and follow-up questions.
+
+#### RAG Search Tool
+For interactive knowledge base queries:
+```bash
+python orchestration_agent/tools/rag_search/interactive.py
+```
+
+This launches an interactive RAG search session where you can query your SRE knowledge base and get detailed answers with document sources.
+
 ## Configuration
 
 ### Agent Configuration
@@ -177,6 +207,15 @@ Located in [`orchestration_agent/tools/rag_search/config.py`](orchestration_agen
 - **Chunk Settings**: Adjust `chunk_size` and `chunk_overlap` for document processing
 - **LLM Model**: Change `model` in agent configuration
 
+### Deep Research Tool Configuration
+
+Located in [`orchestration_agent/tools/deep_research/config.py`](orchestration_agent/tools/deep_research/config.py):
+
+- **SearxNG Integration**: Uses the same SearxNG instance as the search tool
+- **Search Results Limit**: Configurable maximum number of sources to scrape and analyze
+- **LLM Model**: Uses GPT-4o-mini for query generation and analysis
+- **Context Management**: Intelligent context providers for scraped content and current date
+
 ## Architecture
 
 ### Components
@@ -186,6 +225,7 @@ Located in [`orchestration_agent/tools/rag_search/config.py`](orchestration_agen
 - **RAG Search Tool**: Retrieves relevant information from internal knowledge base
 - **ChromaDB Service**: Vector database for document embeddings and similarity search
 - **SearxNG Search Tool**: Searches external sources for technical information
+- **Deep Research Tool**: Multi-step research tool combining query generation, web search, content scraping, and comprehensive analysis
 - **Calculator Tool**: Performs SRE-related calculations
 
 ### Input/Output Schemas
