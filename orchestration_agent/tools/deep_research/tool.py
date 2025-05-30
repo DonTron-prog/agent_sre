@@ -137,18 +137,24 @@ class DeepResearchTool(BaseTool):
         print(f"Processed {results_processed} results, total chars: {current_char_count} (~{current_char_count//4} tokens)")
         return content_items
     
-    def _should_perform_new_search(self, research_query: str) -> bool:
-        """Determine if a new search is needed based on existing context."""
+    
+    def _should_perform_additional_search(self, research_query: str, content_items: List[ContentItem]) -> bool:
+        """Determine if additional searches are needed based on initial results quality."""
+        if len(content_items) == 0:
+            return True  # No results, definitely need more
+        
+        # Check if results seem comprehensive enough
         choice_agent_output = choice_agent.run(
             ChoiceAgentInputSchema(
-                user_message=research_query,
+                user_message=f"Research Query: {research_query}",
                 decision_type=(
-                    "Should we perform a new web search? TRUE if we need new or updated information, FALSE if existing "
-                    "context is sufficient. Consider: 1) Is the context empty? 2) Is the existing information relevant? "
-                    "3) Is the information recent enough?"
+                    "Based on the scraped content available in context, should we perform additional searches? "
+                    "TRUE if the content seems insufficient, incomplete, or doesn't address the query well. "
+                    "FALSE if the content appears comprehensive and relevant for answering the research question."
                 ),
             )
         )
+        print(f"Choice Agent Decision: {choice_agent_output.decision}")
         return choice_agent_output.decision
     
     def _generate_comprehensive_answer(self, research_query: str) -> QuestionAnsweringAgentOutputSchema:
@@ -161,6 +167,9 @@ class DeepResearchTool(BaseTool):
         """
         Execute the deep research process.
         
+        Since the orchestrator has already decided to use deep research, we perform
+        an initial search and then check if additional searches are needed.
+        
         Args:
             input_data: The input schema containing the research query
             
@@ -170,25 +179,28 @@ class DeepResearchTool(BaseTool):
         research_query = input_data.research_query
         max_results = input_data.max_search_results
         
-        # Check if we need to perform a new search
-        should_search = self._should_perform_new_search(research_query)
-        search_queries_used = []
-        sources = []
+        # Always perform initial search since orchestrator chose deep research
+        # Generate search queries
+        search_queries = self._generate_search_queries(research_query)
         
-        if should_search:
-            # Generate search queries
-            search_queries = self._generate_search_queries(research_query)
-            search_queries_used = search_queries
+        # Perform search and scrape content
+        content_items = self._perform_search_and_scrape(search_queries, max_results)
+        
+        # Update context provider with new content
+        self.scraped_content_context_provider.content_items = content_items
+        
+        # Check if we need additional searches based on content quality
+        if self._should_perform_additional_search(research_query, content_items):
+            # Generate additional search queries for more comprehensive coverage
+            additional_queries = self._generate_search_queries(research_query, num_queries=2)
+            additional_content = self._perform_search_and_scrape(additional_queries, max_results // 2)
             
-            # Perform search and scrape content
-            content_items = self._perform_search_and_scrape(search_queries, max_results)
-            
-            # Update context provider with new content
+            # Combine content items
+            content_items.extend(additional_content)
             self.scraped_content_context_provider.content_items = content_items
-            sources = [item.url for item in content_items]
-        else:
-            # Use existing context
-            sources = [item.url for item in self.scraped_content_context_provider.content_items]
+            search_queries.extend(additional_queries)
+        
+        sources = [item.url for item in content_items]
         
         # Generate comprehensive answer
         qa_output = self._generate_comprehensive_answer(research_query)
@@ -198,5 +210,5 @@ class DeepResearchTool(BaseTool):
             answer=qa_output.answer,
             sources=sources,
             follow_up_questions=qa_output.follow_up_questions,
-            search_queries_used=search_queries_used
+            search_queries_used=search_queries
         )

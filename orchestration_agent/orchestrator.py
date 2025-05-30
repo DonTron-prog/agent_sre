@@ -254,22 +254,13 @@ def process_single_alert(agent, tools, alert_data, console, generate_final_answe
     
     input_schema = prepare_input_schema(alert_data)
     
-    console.print("\n[bold yellow]Generated Input Schema:[/bold yellow]")
-    input_syntax = Syntax(
-        str(input_schema.model_dump_json(indent=2)), 
-        "json", 
-        theme="monokai", 
-        line_numbers=True
-    )
-    console.print(input_syntax)
-    
     orchestrator_output = execute_orchestration_pipeline(agent, input_schema)
     
     console.print("\n[bold magenta]Orchestrator Output:[/bold magenta]")
     orchestrator_syntax = Syntax(
-        str(orchestrator_output.model_dump_json(indent=2)), 
-        "json", 
-        theme="monokai", 
+        str(orchestrator_output.model_dump_json(indent=2)),
+        "json",
+        theme="monokai",
         line_numbers=True
     )
     console.print(orchestrator_syntax)
@@ -278,18 +269,24 @@ def process_single_alert(agent, tools, alert_data, console, generate_final_answe
     
     console.print("\n[bold green]Tool Output:[/bold green]")
     output_syntax = Syntax(
-        str(tool_response.model_dump_json(indent=2)), 
-        "json", 
-        theme="monokai", 
+        str(tool_response.model_dump_json(indent=2)),
+        "json",
+        theme="monokai",
         line_numbers=True
     )
     console.print(output_syntax)
     
     console.print("\n" + "-" * 80 + "\n")
     
+    # Handle final answer generation based on tool type
     if generate_final_answer_flag:
-        final_answer_obj = generate_final_answer(agent, input_schema, tool_response)
-        console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer_obj.final_answer}")
+        if orchestrator_output.tool == "deep-research":
+            # Deep research already provides comprehensive answer, no need to re-analyze
+            console.print(f"\n[bold blue]Research Answer:[/bold blue] {tool_response.answer}")
+        else:
+            # Other tools return raw data that needs final answer generation
+            final_answer_obj = generate_final_answer(agent, input_schema, tool_response)
+            console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer_obj.final_answer}")
     
     reset_agent_memory(agent)
 
