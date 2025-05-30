@@ -135,13 +135,11 @@ class SearxNGSearchTool(BaseTool):
         async with aiohttp.ClientSession() as session:
             # Process queries sequentially instead of concurrently
             all_results = []
+            print(f"Max results: {max_results or self.max_results}")
+            print(f"Category: {params.category}")
             for query in params.queries:
-                print(f"Processing query: {query}")
                 # Process one query at a time
                 print(f"Fetching results for query: {query}")
-                print(f"Category: {params.category}")
-                print(f"Max results: {max_results or self.max_results}")
-                print(f"session: {session}")
                 individual_results = await self._fetch_search_results(session, query, params.category)
                 all_results.extend(individual_results)
                 # Add a small delay between queries to avoid rate limiting
