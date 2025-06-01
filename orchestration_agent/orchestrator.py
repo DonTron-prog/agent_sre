@@ -10,7 +10,8 @@ from atomic_agents.lib.components.system_prompt_generator import SystemPromptGen
 from orchestration_agent.schemas.orchestrator_schemas import (
     OrchestratorInputSchema,
     OrchestratorOutputSchema,
-    FinalAnswerSchema
+    FinalAnswerSchema,
+    PlanningAgentOutputSchema
 )
 
 # Import new utilities
@@ -207,22 +208,95 @@ def run_example_scenarios(agent, tools, example_data, console, generate_final_an
         )
 
 #######################
+# PLANNING AGENT FLOW #
+#######################
+
+def process_alert_with_planning(alert: str, context: str = "", model: str = "gpt-4") -> PlanningAgentOutputSchema:
+    """
+    Process an alert using the planning agent.
+    
+    Args:
+        alert: The system alert to process
+        context: Contextual information about the system
+        model: Model name for LLM calls
+        
+    Returns:
+        PlanningAgentOutputSchema: Complete planning execution results
+    """
+    # Initialize components (reuse existing functions)
+    config = load_configuration()
+    tools = initialize_tools(config)
+    
+    # Create instructor client (required by orchestrator agent)
+    import instructor
+    client = instructor.from_openai(openai.OpenAI(api_key=config.get("openai_api_key")))
+    
+    # Create orchestrator core
+    from orchestration_agent.utils.tool_manager import ToolManager
+    
+    # Create the proper orchestrator agent
+    orchestrator_agent = create_orchestrator_agent(client, model)
+    tool_manager = ToolManager(tools)
+    orchestrator_core = OrchestratorCore(orchestrator_agent, tool_manager)
+    
+    # Create and run planning agent
+    from orchestration_agent.planning.simple_agent import SimplePlanningAgent
+    # Use regular OpenAI client for planning agent LLM calls
+    openai_client = openai.OpenAI(api_key=config.get("openai_api_key"))
+    planning_agent = SimplePlanningAgent(orchestrator_core, openai_client, model)
+    
+    return planning_agent.execute_plan(alert, context)
+
+
+def run_planning_scenarios(example_data, model: str = "gpt-4"):
+    """
+    Run example scenarios using the planning agent.
+    
+    Args:
+        example_data: List of alert scenarios
+        model: Model name for LLM calls
+    """
+    console = Console()
+    
+    for i, scenario in enumerate(example_data, 1):
+        console.print(Panel(
+            f"[bold blue]Planning Scenario {i}[/bold blue]\n"
+            f"[yellow]Alert:[/yellow] {scenario['alert']}\n"
+            f"[yellow]Context:[/yellow] {scenario['context']}",
+            title="🤖 SRE Planning Agent",
+            border_style="blue"
+        ))
+        
+        try:
+            result = process_alert_with_planning(
+                scenario["alert"],
+                scenario["context"],
+                model
+            )
+            
+            # Display the summary
+            console.print(Panel(
+                result.summary,
+                title="📋 Planning Execution Summary",
+                border_style="green" if result.success else "red"
+            ))
+            
+        except Exception as e:
+            console.print(Panel(
+                f"[red]Error processing scenario: {e}[/red]",
+                title="❌ Planning Error",
+                border_style="red"
+            ))
+        
+        console.print("\n" + "="*80 + "\n")
+
+#######################
 # MAIN EXECUTION FLOW #
 #######################
 if __name__ == "__main__":
-    config = load_configuration()
+    import sys
     
-    openai_client = setup_environment_and_client(config)
-    
-    agent = create_orchestrator_agent(
-        client=openai_client,
-        model_name=config["model_name"]
-    )
-    
-    tool_instances = initialize_tools(config)
-    
-    console_instance = Console()
-    
+    # Define example scenarios
     example_alerts = [
         {
             "alert": "Critical failure: 'ExtPluginReplicationError: Code 7749 - Sync Timeout with AlphaNode' in 'experimental-geo-sync-plugin v0.1.2' on db-primary.",
@@ -240,16 +314,39 @@ if __name__ == "__main__":
             "alert": "Unusual network traffic pattern detected: 'TLS handshake failures increased by 400% from external IPs in APAC region' affecting load balancer 'prod-lb-01'.",
             "context": "System: Production Load Balancer (HAProxy 2.4). Service: Frontend traffic distribution. Recent changes: SSL certificate renewal completed 2 hours ago. Geographic pattern: 85% of failures from previously unseen IP ranges in Asia-Pacific. No internal documentation exists for this specific failure pattern or geographic correlation analysis."
         }
-        #{
-        #    "alert": "High CPU utilization (95%) on server web-prod-01 for 15 minutes.",
-        #    "context": "System: Production Web Server Cluster (nginx, Python/Flask). Service: Main customer-facing website. Recent changes: New deployment v2.3.1 two hours ago. Known issues: Occasional spikes during peak load. Monitoring tool: Prometheus."
-        #},
     ]
     
-    run_example_scenarios(
-        agent=agent,
-        tools=tool_instances,
-        example_data=example_alerts,
-        console=console_instance,
-        generate_final_answer_flag=True
-    )
+    if len(sys.argv) > 1 and sys.argv[1] == "--planning":
+        # Planning mode
+        console = Console()
+        console.print(Panel(
+            "[bold blue]🤖 SRE Planning Agent[/bold blue]\n"
+            "Running example scenarios with multi-step planning...",
+            title="Planning Agent Mode",
+            border_style="blue"
+        ))
+        
+        run_planning_scenarios(example_alerts)
+        
+    else:
+        # Original mode (unchanged)
+        config = load_configuration()
+        
+        openai_client = setup_environment_and_client(config)
+        
+        agent = create_orchestrator_agent(
+            client=openai_client,
+            model_name=config["model_name"]
+        )
+        
+        tool_instances = initialize_tools(config)
+        
+        console_instance = Console()
+        
+        run_example_scenarios(
+            agent=agent,
+            tools=tool_instances,
+            example_data=example_alerts,
+            console=console_instance,
+            generate_final_answer_flag=True
+        )
