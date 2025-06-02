@@ -6,7 +6,7 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
 
-# Import schemas from new location
+# Import schemas 
 from orchestration_agent.schemas.orchestrator_schemas import (
     OrchestratorInputSchema,
     OrchestratorOutputSchema,
@@ -14,7 +14,7 @@ from orchestration_agent.schemas.orchestrator_schemas import (
     PlanningAgentOutputSchema
 )
 
-# Import new utilities
+# Import utilities
 from orchestration_agent.utils.config_manager import ConfigManager
 from orchestration_agent.utils.tool_manager import ToolManager
 from orchestration_agent.utils.orchestrator_core import OrchestratorCore
@@ -67,29 +67,9 @@ class CurrentDateProvider(SystemPromptContextProviderBase):
     def get_info(self) -> str:
         return f"Current date in format YYYY-MM-DD: {self.date}"
 
-################
-# TOOL EXECUTION #
-################
-# Legacy function for backward compatibility - now delegates to ToolManager
-def execute_tool(searxng_tool, calculator_tool, rag_tool, deep_research_tool, orchestrator_output):
-    """Legacy function for backward compatibility."""
-    tools_dict = {
-        "searxng": searxng_tool,
-        "calculator": calculator_tool,
-        "rag": rag_tool,
-        "deep_research": deep_research_tool
-    }
-    tool_manager = ToolManager(tools_dict)
-    return tool_manager.execute_tool(orchestrator_output)
-
 ###########################
 # ORCHESTRATOR FUNCTIONS  #
 ###########################
-
-# Legacy function for backward compatibility - now delegates to ConfigManager
-def load_configuration():
-    """Load configuration settings from environment variables or config files."""
-    return ConfigManager.load_configuration()
 
 def setup_environment_and_client(config):
     """Set up environment variables and initialize the OpenAI client."""
@@ -131,11 +111,6 @@ def create_orchestrator_agent(client, model_name):
     
     return agent
 
-# Legacy function for backward compatibility - now delegates to ConfigManager
-def initialize_tools(config):
-    """Initialize all required tools with their configurations."""
-    return ConfigManager.initialize_tools(config)
-
 def prepare_input_schema(alert_data):
     """Convert raw alert data into a properly formatted input schema."""
     return OrchestratorInputSchema(
@@ -146,16 +121,6 @@ def prepare_input_schema(alert_data):
 def execute_orchestration_pipeline(agent, input_schema):
     """Run the orchestrator agent to determine which tool to use."""
     return agent.run(input_schema)
-
-def handle_tool_execution(orchestrator_output, tools):
-    """Execute the appropriate tool based on the orchestrator's decision."""
-    return execute_tool(
-        tools["searxng"],
-        tools["calculator"],
-        tools["rag"],
-        tools["deep_research"],
-        orchestrator_output
-    )
 
 def generate_final_answer(agent, input_schema, tool_response):
     """Generate a final answer based on the tool's output."""
@@ -224,8 +189,8 @@ def process_alert_with_planning(alert: str, context: str = "", model: str = "gpt
         PlanningAgentOutputSchema: Complete planning execution results
     """
     # Initialize components (reuse existing functions)
-    config = load_configuration()
-    tools = initialize_tools(config)
+    config = ConfigManager.load_configuration()
+    tools = ConfigManager.initialize_tools(config)
     
     # Create instructor client (required by orchestrator agent)
     import instructor
@@ -330,7 +295,7 @@ if __name__ == "__main__":
         
     else:
         # Original mode (unchanged)
-        config = load_configuration()
+        config = ConfigManager.load_configuration()
         
         openai_client = setup_environment_and_client(config)
         
@@ -339,7 +304,7 @@ if __name__ == "__main__":
             model_name=config["model_name"]
         )
         
-        tool_instances = initialize_tools(config)
+        tool_instances = ConfigManager.initialize_tools(config)
         
         console_instance = Console()
         
