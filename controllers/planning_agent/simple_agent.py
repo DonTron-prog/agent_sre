@@ -5,7 +5,7 @@ from openai import OpenAI
 from orchestration_engine.utils.orchestrator_core import OrchestratorCore
 from orchestration_engine.utils.interfaces import ExecutionContext
 from orchestration_engine.utils.context_utils import ContextAccumulator
-from planner_schemas import (
+from controllers.planning_agent.planner_schemas import (
     SimplePlanSchema,
     PlanStepSchema,
     PlanningAgentOutputSchema

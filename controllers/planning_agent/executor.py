@@ -8,8 +8,8 @@ from rich.console import Console
 from rich.panel import Panel
 from orchestration_engine import ConfigManager, ToolManager, OrchestratorCore
 from orchestration_engine.orchestrator import create_orchestrator_agent
-from planner_schemas import PlanningAgentOutputSchema
-from simple_agent import SimplePlanningAgent
+from controllers.planning_agent.planner_schemas import PlanningAgentOutputSchema
+from controllers.planning_agent.simple_agent import SimplePlanningAgent
 
 
 def process_alert_with_planning(alert: str, context: str = "", model: str = "gpt-4") -> PlanningAgentOutputSchema:
