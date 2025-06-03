@@ -38,3 +38,19 @@ class PlanningAgentOutputSchema(BaseIOSchema):
     plan: SimplePlanSchema = Field(..., description="The executed plan with all steps and results")
     summary: str = Field(..., description="Human-readable summary of the planning execution")
     success: bool = Field(..., description="Whether the planning execution was successful")
+class AtomicPlanningToExecutionSchema(BaseIOSchema):
+    """Schema to bridge atomic planning output to execution input."""
+    
+    alert: str = Field(..., description="The original system alert")
+    context: str = Field(..., description="Contextual information about the system")
+    steps: List[PlanStepSchema] = Field(..., description="Generated plan steps")
+    reasoning: str = Field(..., description="Planning rationale")
+    
+    def to_simple_plan(self) -> SimplePlanSchema:
+        """Convert to SimplePlanSchema for execution."""
+        return SimplePlanSchema(
+            alert=self.alert,
+            context=self.context,
+            steps=self.steps,
+            accumulated_knowledge=f"Planning reasoning: {self.reasoning}"
+        )

@@ -1,19 +1,25 @@
 # Planning Agent with Atomic Agents
 
-This module provides a modern SRE incident planning and execution system built with the Atomic Agents framework.
+This module provides both legacy and modern Atomic Agents implementations for SRE incident planning and execution.
 
 ## Architecture Overview
 
-The planning agent uses **Atomic Agents** architecture with clear separation of concerns:
+### Legacy SimplePlanningAgent
+- **File**: [`simple_agent.py`](simple_agent.py)
+- **Approach**: Monolithic class with mixed responsibilities
+- **Planning**: Manual text parsing and string manipulation
+- **Execution**: Direct orchestrator integration
+- **Issues**: Hard to test, debug, and extend
 
+### Atomic Agents Architecture
 - **Planning**: [`atomic_planning_agent.py`](atomic_planning_agent.py) - Pure planning with structured outputs
 - **Execution**: [`execution_orchestrator.py`](execution_orchestrator.py) - Pure execution logic
 - **Schemas**: [`planner_schemas.py`](planner_schemas.py) - Structured I/O contracts
-- **Orchestration**: [`atomic_executor.py`](atomic_executor.py) - Complete workflow coordination
+- **Benefits**: Modular, testable, debuggable, composable
 
 ## Quick Start
 
-### Basic Usage
+### Using Atomic Agents (Recommended)
 
 ```python
 from controllers.planning_agent import (
@@ -39,21 +45,14 @@ execution_result = execution_orchestrator.run(
 )
 ```
 
-### Complete Workflow
+### Using Legacy SimplePlanningAgent
 
 ```python
-from controllers.planning_agent import process_alert_with_atomic_planning
+from controllers.planning_agent import SimplePlanningAgent
 
-# One-line execution of complete workflow
-result = process_alert_with_atomic_planning(
-    alert="Critical: Service 'api-gateway' returning 500 errors",
-    context="Production API Gateway, error rate: 15%",
-    model="gpt-4"
-)
-
-print(f"Success: {result.success}")
-print(f"Steps executed: {len(result.plan.steps)}")
-print(f"Summary: {result.summary}")
+# Legacy approach
+planning_agent = SimplePlanningAgent(orchestrator_core, openai_client, model)
+result = planning_agent.execute_plan(alert, context)
 ```
 
 ## File Structure
@@ -64,6 +63,10 @@ controllers/planning_agent/
 ├── __init__.py                        # Module exports
 ├── planner_schemas.py                 # Pydantic schemas
 │
+├── # Legacy Implementation
+├── simple_agent.py                    # Legacy monolithic agent
+├── executor.py                        # Legacy executor
+│
 ├── # Atomic Agents Implementation  
 ├── atomic_planning_agent.py           # Pure planning agent
 ├── execution_orchestrator.py          # Pure execution logic
@@ -71,7 +74,7 @@ controllers/planning_agent/
 │
 └── # Testing & Demo
     ├── test_atomic_components.py      # Component tests
-    └── demo_atomic_agents.py          # Architecture demo
+    └── demo_atomic_vs_legacy.py       # Architecture comparison
 ```
 
 ## Key Components
@@ -153,21 +156,28 @@ execution_result = execution_orchestrator.run(
 python controllers/planning_agent/test_atomic_components.py
 ```
 
-### 2. Explore Architecture
+### 2. Compare Architectures
 
 ```bash
-# Interactive demo of atomic agents features
-python controllers/planning_agent/demo_atomic_agents.py
+# Interactive demo comparing legacy vs atomic approaches
+python controllers/planning_agent/demo_atomic_vs_legacy.py
 ```
 
-### 3. Run Complete Workflow
+### 3. Run Legacy Executor
+
+```bash
+# Run legacy SimplePlanningAgent
+python controllers/planning_agent/executor.py
+```
+
+### 4. Run Atomic Executor
 
 ```bash
 # Run atomic agents workflow
 python controllers/planning_agent/atomic_executor.py
 ```
 
-## Benefits of Atomic Agents Architecture
+## Benefits of Atomic Agents Approach
 
 ### 🔍 **Transparency**
 - Clear input/output contracts for every component
@@ -199,25 +209,40 @@ python controllers/planning_agent/atomic_executor.py
 - Build complex workflows from simple atoms
 - Reuse components in different contexts
 
-## Architecture Diagram
+## Migration Guide
 
-```mermaid
-graph TD
-    A[Alert Input] --> B[AtomicPlanningAgent]
-    B --> C[AtomicPlanningOutputSchema]
-    C --> D[AtomicPlanningToExecutionSchema]
-    D --> E[ExecutionOrchestrator]
-    E --> F[OrchestratorCore]
-    F --> G[Tool Execution]
-    G --> H[ExecutionOrchestratorOutputSchema]
-    H --> I[Final Summary]
-    
-    style B fill:#e8f5e8
-    style E fill:#e8f5e8
-    style C fill:#e3f2fd
-    style D fill:#e3f2fd
-    style H fill:#e3f2fd
-```
+### From Legacy to Atomic
+
+1. **Replace planning logic**:
+   ```python
+   # Old
+   planning_agent = SimplePlanningAgent(...)
+   
+   # New
+   planning_agent = create_atomic_planning_agent(api_key, model)
+   ```
+
+2. **Separate execution**:
+   ```python
+   # Old
+   result = planning_agent.execute_plan(alert, context)
+   
+   # New
+   planning_result = planning_agent.run(AtomicPlanningInputSchema(...))
+   execution_result = execution_orchestrator.run(ExecutionOrchestratorInputSchema(...))
+   ```
+
+3. **Use structured schemas**:
+   ```python
+   # Old - manual parsing
+   for line in steps_text.split('\n'):
+       if line and line[0].isdigit():
+           step_desc = line.split('.', 1)[-1].strip()
+   
+   # New - guaranteed structure
+   planning_result = planning_agent.run(input_schema)
+   assert isinstance(planning_result, AtomicPlanningOutputSchema)
+   ```
 
 ## Configuration
 
@@ -317,34 +342,6 @@ When adding new atomic components:
 4. **Document Schemas**: Add clear field descriptions
 5. **Update __init__.py**: Export new components
 
-## Example Scenarios
-
-The system handles various SRE scenarios:
-
-### 1. Database Issues
-```python
-result = process_alert_with_atomic_planning(
-    alert="Critical failure: 'ExtPluginReplicationError: Code 7749 - Sync Timeout with AlphaNode'",
-    context="Primary PostgreSQL Database (Version 15.3). Plugin: experimental-geo-sync-plugin v0.1.2"
-)
-```
-
-### 2. Kubernetes Problems
-```python
-result = process_alert_with_atomic_planning(
-    alert="Pod CrashLoopBackOff for service 'checkout-service'",
-    context="Kubernetes microservice (Java Spring Boot). Memory: 512Mi, CPU: 0.5 core"
-)
-```
-
-### 3. API Gateway Issues
-```python
-result = process_alert_with_atomic_planning(
-    alert="API endpoint /api/v2/orders returning 503 Service Unavailable",
-    context="API Gateway (Kong) and backend OrderService. Error rate: 5%"
-)
-```
-
 ## Future Enhancements
 
 - [ ] Add streaming support for real-time plan generation
@@ -352,5 +349,3 @@ result = process_alert_with_atomic_planning(
 - [ ] Add support for conditional execution flows
 - [ ] Create specialized planning agents for different incident types
 - [ ] Add metrics and observability for planning performance
-- [ ] Support for multi-step plan dependencies
-- [ ] Integration with external monitoring systems

@@ -3,7 +3,7 @@
 Example usage of the refactored orchestration engine with planning agent.
 """
 
-from controllers.planning_agent import process_alert_with_planning
+from controllers.planning_agent.atomic_executor import process_alert_with_atomic_planning
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
     print("-" * 60)
     
     # Execute the planning workflow using the new executor
-    result = process_alert_with_planning(alert, context)
+    result = process_alert_with_atomic_planning(alert, context)
     
     print("-" * 60)
     print("📊 Final Results:")
