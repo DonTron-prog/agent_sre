@@ -1,27 +1,27 @@
 """Tool management utilities for the orchestration agent."""
 
 from typing import Union, Dict, Any
-from orchestration_agent.tools.searxng_search import (
+from orchestration_engine.tools.searxng_search import (
     SearxNGSearchTool,
     SearxNGSearchToolInputSchema,
     SearxNGSearchToolOutputSchema,
 )
-from orchestration_agent.tools.calculator import (
+from orchestration_engine.tools.calculator import (
     CalculatorTool,
     CalculatorToolInputSchema,
     CalculatorToolOutputSchema,
 )
-from orchestration_agent.tools.rag_search import (
+from orchestration_engine.tools.rag_search import (
     RAGSearchTool,
     RAGSearchToolInputSchema,
     RAGSearchToolOutputSchema
 )
-from orchestration_agent.tools.deep_research import (
+from orchestration_engine.tools.deep_research import (
     DeepResearchTool,
     DeepResearchToolInputSchema,
     DeepResearchToolOutputSchema,
 )
-from orchestration_agent.schemas.orchestrator_schemas import OrchestratorOutputSchema
+from orchestration_engine.schemas.orchestrator_schemas import OrchestratorOutputSchema
 
 
 class ToolManager:

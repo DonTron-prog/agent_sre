@@ -7,13 +7,13 @@ from pydantic import Field
 from atomic_agents.lib.base.base_tool import BaseTool, BaseIOSchema
 from atomic_agents.lib.components.agent_memory import AgentMemory # Added for completeness, though not directly used in this snippet
 
-from orchestration_agent.tools.rag_search.config import RAGSearchToolConfig
-from orchestration_agent.services.chroma_db import ChromaDBService
+from orchestration_engine.tools.rag_search.config import RAGSearchToolConfig
+from orchestration_engine.services.chroma_db import ChromaDBService
 import sys
-from orchestration_agent.tools.rag_search.rag_context_providers import RAGContextProvider, ChunkItem
-from orchestration_agent.agents.rag_query_agent import create_query_agent, RAGQueryAgentInputSchema
-from orchestration_agent.agents.rag_qa_agent import create_qa_agent, RAGQuestionAnsweringAgentInputSchema
-from orchestration_agent.tools.rag_search.document_processor import DocumentProcessor
+from orchestration_engine.tools.rag_search.rag_context_providers import RAGContextProvider, ChunkItem
+from orchestration_engine.agents.rag_query_agent import create_query_agent, RAGQueryAgentInputSchema
+from orchestration_engine.agents.rag_qa_agent import create_qa_agent, RAGQuestionAnsweringAgentInputSchema
+from orchestration_engine.tools.rag_search.document_processor import DocumentProcessor
 
 # --- Schemas ---
 class RAGSearchToolInputSchema(BaseIOSchema):

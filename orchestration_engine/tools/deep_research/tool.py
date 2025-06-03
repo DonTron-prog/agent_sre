@@ -3,16 +3,16 @@ from pydantic import Field
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
-from orchestration_agent.agents.query_agent import QueryAgentInputSchema, query_agent
-from orchestration_agent.agents.qa_agent import (
+from orchestration_engine.agents.query_agent import QueryAgentInputSchema, query_agent
+from orchestration_engine.agents.qa_agent import (
     QuestionAnsweringAgentInputSchema,
     question_answering_agent,
     QuestionAnsweringAgentOutputSchema,
 )
-from orchestration_agent.agents.choice_agent import choice_agent, ChoiceAgentInputSchema
-from orchestration_agent.tools.searxng_search import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolInputSchema
-from orchestration_agent.tools.webpage_scraper import WebpageScraperTool, WebpageScraperToolInputSchema
-from orchestration_agent.tools.deep_research.deepresearch_context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
+from orchestration_engine.agents.choice_agent import choice_agent, ChoiceAgentInputSchema
+from orchestration_engine.tools.searxng_search import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolInputSchema
+from orchestration_engine.tools.webpage_scraper import WebpageScraperTool, WebpageScraperToolInputSchema
+from orchestration_engine.tools.deep_research.deepresearch_context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
 
 
 class DeepResearchToolInputSchema(BaseIOSchema):

@@ -6,13 +6,13 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
-from orchestration_agent.schemas.orchestrator_schemas import (
+from orchestration_engine.schemas.orchestrator_schemas import (
     OrchestratorInputSchema,
     OrchestratorOutputSchema,
     FinalAnswerSchema
 )
-from orchestration_agent.utils.tool_manager import ToolManager
-from orchestration_agent.utils.interfaces import ExecutionContext, PlanningCapableOrchestrator
+from orchestration_engine.utils.tool_manager import ToolManager
+from orchestration_engine.utils.interfaces import ExecutionContext, PlanningCapableOrchestrator
 
 
 class OrchestratorCore(PlanningCapableOrchestrator):

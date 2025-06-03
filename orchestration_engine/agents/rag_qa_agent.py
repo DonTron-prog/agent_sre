@@ -5,7 +5,7 @@ from pydantic import Field
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseIOSchema
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from atomic_agents.lib.components.agent_memory import AgentMemory
-from orchestration_agent.tools.rag_search.rag_context_providers import RAGContextProvider # Adjusted import
+from orchestration_engine.tools.rag_search.rag_context_providers import RAGContextProvider # Adjusted import
 
 class RAGQuestionAnsweringAgentInputSchema(BaseIOSchema):
     """Input schema for the RAG QA agent, taking the user's question."""
