@@ -2,6 +2,8 @@
 
 from typing import Any, Optional
 import json
+from datetime import datetime
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
 
 
 class ContextAccumulator:
@@ -157,3 +159,15 @@ class ContextAccumulator:
             focused_context += f"\n\nPrevious investigation findings: {findings_text}"
         
         return focused_alert, focused_context
+
+
+class CurrentDateProvider(SystemPromptContextProviderBase):
+    """Reusable current date context provider."""
+    
+    def __init__(self, title: str = "Current Date", date_format: str = "%Y-%m-%d"):
+        super().__init__(title)
+        self.date_format = date_format
+    
+    def get_info(self) -> str:
+        current_date = datetime.now().strftime(self.date_format)
+        return f"Current date in format {self.date_format}: {current_date}"

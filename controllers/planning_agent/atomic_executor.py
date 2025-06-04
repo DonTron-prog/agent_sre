@@ -7,8 +7,7 @@ import openai
 import instructor
 from rich.console import Console
 from rich.panel import Panel
-from orchestration_engine import ConfigManager, ToolManager, OrchestratorCore
-from orchestration_engine.orchestrator import create_orchestrator_agent
+from orchestration_engine import ConfigManager, ToolManager, OrchestratorCore, create_orchestrator_agent
 from controllers.planning_agent.atomic_planning_agent import (
     AtomicPlanningAgent, 
     AtomicPlanningInputSchema,

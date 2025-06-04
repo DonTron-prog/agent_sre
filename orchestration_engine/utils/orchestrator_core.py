@@ -4,8 +4,11 @@ from typing import Dict, Any, Tuple, Optional
 from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
+from pydantic import Field
 
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from orchestration_engine.schemas.orchestrator_schemas import (
     OrchestratorInputSchema,
     OrchestratorOutputSchema,
@@ -13,6 +16,64 @@ from orchestration_engine.schemas.orchestrator_schemas import (
 )
 from orchestration_engine.utils.tool_manager import ToolManager
 from orchestration_engine.utils.interfaces import ExecutionContext, PlanningCapableOrchestrator
+from orchestration_engine.utils.context_utils import CurrentDateProvider
+
+from orchestration_engine.tools.searxng_search import SearxNGSearchToolConfig
+from orchestration_engine.tools.calculator import CalculatorToolConfig
+from orchestration_engine.tools.rag_search import RAGSearchToolConfig
+from orchestration_engine.tools.deep_research import DeepResearchToolConfig
+
+
+#######################
+# AGENT CONFIGURATION #
+#######################
+class OrchestratorAgentConfig(BaseAgentConfig):
+    """Configuration for the Orchestrator Agent."""
+
+    searxng_config: SearxNGSearchToolConfig
+    calculator_config: CalculatorToolConfig
+    rag_config: RAGSearchToolConfig
+    deep_research_config: DeepResearchToolConfig
+
+
+###########################
+# ORCHESTRATOR FUNCTIONS  #
+###########################
+
+def create_orchestrator_agent(client, model_name):
+    """Create and configure the orchestrator agent instance."""
+    system_prompt_generator = SystemPromptGenerator(
+        background=[
+            "You are an SRE Orchestrator Agent. Your primary role is to analyze a system alert and its associated context. Based on this analysis, you must decide which tool (RAG, web-search, deep-research, or calculator) will provide the most valuable additional information or context for a subsequent reflection agent to understand and act upon the alert.",
+            "Use the RAG (Retrieval Augmented Generation) tool for querying internal SRE knowledge bases. This includes runbooks, incident histories, post-mortems, architectural diagrams, service dependencies, and internal documentation related to the alerted system or similar past issues.",
+            "Use the web-search tool for finding external information. This includes searching for specific error codes, CVEs (Common Vulnerabilities and Exposures), documentation for third-party software or services, status pages of external dependencies, or general troubleshooting guides from the broader internet.",
+            "Use the deep-research tool when you need comprehensive, multi-source research on complex topics. This tool automatically generates multiple search queries, scrapes content from multiple sources, and synthesizes comprehensive answers. Use this for complex troubleshooting scenarios, emerging technologies, or when you need detailed analysis of unfamiliar systems or error patterns.",
+            "Use the calculator tool if the alert involves specific metrics, thresholds, or requires calculations to determine severity, impact (e.g., error budget consumption), or trends.",
+        ],
+        output_instructions=[
+            "Carefully analyze the provided 'system_alert' and 'system_context'.",
+            "Determine if the most valuable next step is to: query internal knowledge (RAG), search for external information (web-search), perform comprehensive research (deep-research), or perform a calculation (calculator).",
+            "If RAG is chosen: use the 'rag' tool. Formulate a specific question for the RAG system based on the alert and context to retrieve relevant internal documentation (e.g., 'Find runbooks for high CPU on web servers', 'Retrieve incident history for ORA-12514 on payment_db').",
+            "If web-search is chosen: use the 'search' tool. Provide 1-3 concise and relevant search queries based on the alert and context (e.g., 'ORA-12514 TNS listener error Oracle', 'Kubernetes Pod CrashLoopBackOff OOMKilled troubleshooting').",
+            "If deep-research is chosen: use the 'deep-research' tool. Provide a comprehensive research question that requires analysis of multiple sources and synthesis of information (e.g., 'Research ExtPluginReplicationError Code 7749 in experimental-geo-sync-plugin v0.1.2 and provide troubleshooting guidance', 'Analyze Java OutOfMemoryError patterns in Kubernetes microservices and provide resolution strategies').",
+            "If calculator is chosen: use the 'calculator' tool. Provide the mathematical expression needed (e.g., if latency increased from 50ms to 500ms, an expression could be '500 / 50' to find the factor of increase).",
+            "Format your output strictly according to the OrchestratorOutputSchema.",
+        ],
+    )
+    
+    agent = BaseAgent(
+        BaseAgentConfig(
+            client=client,
+            model=model_name,
+            system_prompt_generator=system_prompt_generator,
+            input_schema=OrchestratorInputSchema,
+            output_schema=OrchestratorOutputSchema,
+        )
+    )
+    
+    agent.register_context_provider("current_date", CurrentDateProvider("Current Date"))
+    
+    return agent
 
 
 class OrchestratorCore(PlanningCapableOrchestrator):
