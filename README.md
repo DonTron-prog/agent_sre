@@ -17,14 +17,21 @@ The planning agent uses **Atomic Agents** architecture with clear separation of 
 
 ```python
 from controllers.planning_agent import (
-    create_atomic_planning_agent,
+    AtomicPlanningAgent, # <-- Changed
     ExecutionOrchestrator,
     AtomicPlanningInputSchema,
     ExecutionOrchestratorInputSchema
 )
+import instructor # <-- Added
+import openai # <-- Added
+import os # <-- Added for example
+
+# 0. Create a shared client (ensure api_key is available)
+api_key = os.getenv("OPENAI_API_KEY") # Example
+shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key))
 
 # 1. Create atomic planning agent
-planning_agent = create_atomic_planning_agent(api_key="your-key", model="gpt-4")
+planning_agent = AtomicPlanningAgent(shared_client, model="gpt-4")
 
 # 2. Generate structured plan
 planning_result = planning_agent.run(AtomicPlanningInputSchema(
@@ -270,7 +277,8 @@ except Exception as e:
 ### 4. **Test Components Independently**
 ```python
 def test_planning_agent():
-    agent = create_atomic_planning_agent(api_key, model)
+    # shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)) # Example
+    agent = AtomicPlanningAgent(shared_client, model)
     result = agent.run(test_input)
     assert len(result.steps) >= 3
     assert result.reasoning is not None

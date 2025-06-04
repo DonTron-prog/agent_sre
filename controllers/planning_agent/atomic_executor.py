@@ -9,9 +9,8 @@ from rich.console import Console
 from rich.panel import Panel
 from orchestration_engine import ConfigManager, ToolManager, OrchestratorCore, create_orchestrator_agent
 from controllers.planning_agent.atomic_planning_agent import (
-    AtomicPlanningAgent, 
-    AtomicPlanningInputSchema,
-    create_atomic_planning_agent
+    AtomicPlanningAgent,
+    AtomicPlanningInputSchema
 )
 from controllers.planning_agent.execution_orchestrator import (
     ExecutionOrchestrator,
@@ -23,7 +22,7 @@ from controllers.planning_agent.planner_schemas import (
 )
 
 
-def process_alert_with_atomic_planning(alert: str, context: str = "", model: str = "gpt-4") -> PlanningAgentOutputSchema:
+def process_alert_with_atomic_planning(alert: str, context: str = "", model: str = "mistral/ministral-8b") -> PlanningAgentOutputSchema:
     """
     Process an alert using the atomic planning agent architecture.
     
@@ -47,7 +46,11 @@ def process_alert_with_atomic_planning(alert: str, context: str = "", model: str
     tools = ConfigManager.initialize_tools(config)
     
     # Create instructor client for orchestrator agent
-    instructor_client = instructor.from_openai(openai.OpenAI(api_key=config.get("openai_api_key")))
+    client = openai.OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=config.get("openrouter_api_key")
+    )
+    instructor_client = instructor.from_openai(client, mode=instructor.Mode.JSON)
     
     # Create orchestrator core
     orchestrator_agent = create_orchestrator_agent(instructor_client, model)
@@ -61,9 +64,9 @@ def process_alert_with_atomic_planning(alert: str, context: str = "", model: str
         border_style="blue"
     ))
     
-    # Step 1: Create atomic planning agent
-    planning_agent = create_atomic_planning_agent(
-        api_key=config.get("openai_api_key"),
+    # Step 1: Create atomic planning agent using the shared client
+    planning_agent = AtomicPlanningAgent(
+        client=instructor_client,
         model=model
     )
     
@@ -166,7 +169,7 @@ def process_alert_with_atomic_planning(alert: str, context: str = "", model: str
         )
 
 
-def run_atomic_planning_scenarios(example_data, model: str = "gpt-4"):
+def run_atomic_planning_scenarios(example_data, model: str = "mistral/ministral-8b"):
     """
     Run example scenarios using the atomic planning agent.
     

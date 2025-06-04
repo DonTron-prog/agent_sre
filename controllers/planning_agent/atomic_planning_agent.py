@@ -83,21 +83,6 @@ class AtomicPlanningAgent(BaseAgent):
         )
 
 
-def create_atomic_planning_agent(api_key: str, model: str = "gpt-4") -> AtomicPlanningAgent:
-    """
-    Factory function to create an Atomic Planning Agent with proper client setup.
-    
-    Args:
-        api_key: OpenAI API key
-        model: Model name for LLM calls
-        
-    Returns:
-        AtomicPlanningAgent: Configured planning agent
-    """
-    client = instructor.from_openai(openai.OpenAI(api_key=api_key))
-    return AtomicPlanningAgent(client, model)
-
-
 # Example usage
 if __name__ == "__main__":
     import os
@@ -105,9 +90,12 @@ if __name__ == "__main__":
     
     console = Console()
     
-    # Create agent
-    agent = create_atomic_planning_agent(
-        api_key=os.getenv("OPENAI_API_KEY"),
+    # Create a shared client
+    shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("OPENAI_API_KEY")))
+
+    # Create agent using the shared client
+    agent = AtomicPlanningAgent(
+        client=shared_client,
         model="gpt-4"
     )
     

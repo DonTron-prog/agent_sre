@@ -109,13 +109,20 @@ def show_code_examples():
     console.print("""
 ```python
 from controllers.planning_agent import (
-    create_atomic_planning_agent,
+    AtomicPlanningAgent,
     ExecutionOrchestrator,
     AtomicPlanningInputSchema
 )
+# Import necessary for client creation
+import instructor
+import openai
+
+# Create a shared client (assuming api_key is defined)
+# api_key = os.getenv("OPENAI_API_KEY") # Example: ensure api_key is available
+shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key))
 
 # Create atomic planning agent
-planning_agent = create_atomic_planning_agent(api_key, model="gpt-4")
+planning_agent = AtomicPlanningAgent(shared_client, model="gpt-4")
 
 # Generate structured plan
 planning_result = planning_agent.run(AtomicPlanningInputSchema(
@@ -230,8 +237,10 @@ def show_migration_guide():
    from controllers.planning_agent import SimplePlanningAgent
    
    # New
-   from controllers.planning_agent import create_atomic_planning_agent
-   ```
+   from controllers.planning_agent import AtomicPlanningAgent
+   import instructor
+   import openai
+  ```
 
 2. **Update planning logic**:
    ```python
@@ -240,7 +249,8 @@ def show_migration_guide():
    result = planning_agent.execute_plan(alert, context)
    
    # New
-   planning_agent = create_atomic_planning_agent(api_key, model)
+   # shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)) # Example
+   planning_agent = AtomicPlanningAgent(shared_client, model)
    planning_result = planning_agent.run(AtomicPlanningInputSchema(...))
    ```
 

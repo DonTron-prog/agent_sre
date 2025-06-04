@@ -33,6 +33,7 @@ class ConfigManager:
         """
         config = {
             "openai_api_key": os.getenv("OPENAI_API_KEY"),
+            "openrouter_api_key": os.getenv("OPENROUTER_API_KEY"),
             "model_name": os.getenv("MODEL_NAME", "gpt-4o-mini"),
             "searxng_base_url": os.getenv("SEARXNG_BASE_URL", "http://localhost:8080"),
             "knowledge_base_dir": os.path.join(os.path.dirname(__file__), "..", "..", "knowledge_base_sre"),
