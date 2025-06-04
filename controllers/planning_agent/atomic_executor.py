@@ -10,7 +10,8 @@ from rich.panel import Panel
 from orchestration_engine import ConfigManager, ToolManager, OrchestratorCore, create_orchestrator_agent
 from controllers.planning_agent.atomic_planning_agent import (
     AtomicPlanningAgent,
-    AtomicPlanningInputSchema
+    AtomicPlanningInputSchema,
+    create_atomic_planning_agent
 )
 from controllers.planning_agent.execution_orchestrator import (
     ExecutionOrchestrator,
@@ -64,8 +65,8 @@ def process_alert_with_atomic_planning(alert: str, context: str = "", model: str
         border_style="blue"
     ))
     
-    # Step 1: Create atomic planning agent using the shared client
-    planning_agent = AtomicPlanningAgent(
+    # Step 1: Create atomic planning agent using the factory function
+    planning_agent = create_atomic_planning_agent(
         client=instructor_client,
         model=model
     )

@@ -109,7 +109,7 @@ def show_code_examples():
     console.print("""
 ```python
 from controllers.planning_agent import (
-    AtomicPlanningAgent,
+    create_atomic_planning_agent,
     ExecutionOrchestrator,
     AtomicPlanningInputSchema
 )
@@ -122,7 +122,7 @@ import openai
 shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key))
 
 # Create atomic planning agent
-planning_agent = AtomicPlanningAgent(shared_client, model="gpt-4")
+planning_agent = create_atomic_planning_agent(shared_client, model="gpt-4")
 
 # Generate structured plan
 planning_result = planning_agent.run(AtomicPlanningInputSchema(
@@ -250,7 +250,7 @@ def show_migration_guide():
    
    # New
    # shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)) # Example
-   planning_agent = AtomicPlanningAgent(shared_client, model)
+   planning_agent = create_atomic_planning_agent(shared_client, model)
    planning_result = planning_agent.run(AtomicPlanningInputSchema(...))
    ```
 

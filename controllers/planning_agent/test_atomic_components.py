@@ -8,7 +8,8 @@ from rich.console import Console
 from rich.panel import Panel
 from controllers.planning_agent.atomic_planning_agent import (
     AtomicPlanningAgent,
-    AtomicPlanningInputSchema
+    AtomicPlanningInputSchema,
+    create_atomic_planning_agent
 )
 from controllers.planning_agent.execution_orchestrator import (
     ExecutionOrchestrator,
@@ -41,9 +42,9 @@ def test_atomic_planning_agent():
         # Create a shared client
         shared_client = instructor.from_openai(openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key))
 
-        # Create atomic planning agent using the shared client
+        # Create atomic planning agent using the factory function
         console.print("🔧 Creating atomic planning agent...")
-        planning_agent = AtomicPlanningAgent(shared_client, "gpt-4o-mini")
+        planning_agent = create_atomic_planning_agent(shared_client, "gpt-4o-mini")
         console.print("✅ Atomic planning agent created successfully")
         
         # Test input

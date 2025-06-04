@@ -4,7 +4,8 @@
 from .atomic_planning_agent import (
     AtomicPlanningAgent,
     AtomicPlanningInputSchema,
-    AtomicPlanningOutputSchema
+    AtomicPlanningOutputSchema,
+    create_atomic_planning_agent
 )
 from .execution_orchestrator import (
     ExecutionOrchestrator,
@@ -28,8 +29,9 @@ from .planner_schemas import (
 __all__ = [
     # Atomic Agents components
     'AtomicPlanningAgent',
-    'AtomicPlanningInputSchema', 
+    'AtomicPlanningInputSchema',
     'AtomicPlanningOutputSchema',
+    'create_atomic_planning_agent',
     'ExecutionOrchestrator',
     'ExecutionOrchestratorInputSchema',
     'ExecutionOrchestratorOutputSchema',
