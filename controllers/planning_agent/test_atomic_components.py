@@ -17,8 +17,7 @@ from controllers.planning_agent.execution_orchestrator import (
 )
 from controllers.planning_agent.planner_schemas import (
     SimplePlanSchema,
-    PlanStepSchema,
-    AtomicPlanningToExecutionSchema
+    PlanStepSchema
 )
 
 
@@ -143,21 +142,16 @@ def test_schema_chaining():
         console.print(f"Steps: {len(mock_planning_result.steps)}")
         console.print(f"Reasoning: {mock_planning_result.reasoning}")
         
-        # Test bridge schema
-        bridge_schema = AtomicPlanningToExecutionSchema(
+        # Test direct integration - create execution input directly
+        execution_input = ExecutionOrchestratorInputSchema(
             alert="Test alert",
-            context="Test context", 
-            steps=mock_planning_result.steps,
-            reasoning=mock_planning_result.reasoning
+            context="Test context",
+            planning_output=mock_planning_result
         )
         
-        console.print("✅ Bridge schema created successfully")
-        
-        # Convert to execution format
-        simple_plan = bridge_schema.to_simple_plan()
-        console.print("✅ Converted to SimplePlanSchema for execution")
-        console.print(f"Plan has {len(simple_plan.steps)} steps")
-        console.print(f"Accumulated knowledge: {simple_plan.accumulated_knowledge[:50]}...")
+        console.print("✅ Direct execution input created successfully")
+        console.print(f"Planning output has {len(mock_planning_result.steps)} steps")
+        console.print(f"Reasoning: {mock_planning_result.reasoning[:50]}...")
         
         # Test execution input
         execution_input = ExecutionOrchestratorInputSchema(plan=simple_plan)

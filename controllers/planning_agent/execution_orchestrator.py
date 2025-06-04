@@ -6,13 +6,15 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from orchestration_engine.utils.orchestrator_core import OrchestratorCore
 from orchestration_engine.utils.interfaces import ExecutionContext
 from orchestration_engine.utils.context_utils import ContextAccumulator
-from controllers.planning_agent.planner_schemas import SimplePlanSchema, PlanStepSchema
+from controllers.planning_agent.atomic_planning_agent import AtomicPlanningOutputSchema
 
 
 class ExecutionOrchestratorInputSchema(BaseIOSchema):
     """Input schema for the Execution Orchestrator."""
     
-    plan: SimplePlanSchema = Field(..., description="The plan to execute")
+    alert: str = Field(..., description="The original system alert")
+    context: str = Field(..., description="Contextual information about the system")
+    planning_output: AtomicPlanningOutputSchema = Field(..., description="Output from the planning agent")
 
 
 class StepExecutionResult(BaseIOSchema):
@@ -59,27 +61,30 @@ class ExecutionOrchestrator:
         Execute a plan step by step.
         
         Args:
-            params: Input parameters containing the plan to execute
+            params: Input parameters containing alert, context, and planning output
             
         Returns:
             ExecutionOrchestratorOutputSchema: Complete execution results
         """
-        plan = params.plan
+        alert = params.alert
+        context = params.context
+        planning_output = params.planning_output
+        steps = planning_output.steps
         executed_steps = []
         success = True
-        accumulated_knowledge = plan.accumulated_knowledge
+        accumulated_knowledge = f"Planning reasoning: {planning_output.reasoning}"
         
-        print(f"🚀 Starting execution of plan with {len(plan.steps)} steps")
+        print(f"🚀 Starting execution of plan with {len(steps)} steps")
         
         # Execute each step
-        for step_index, step in enumerate(plan.steps):
+        for step_index, step in enumerate(steps):
             print(f"\n🔄 Executing Step {step_index + 1}: {step.description}")
             
             try:
                 # Create execution context for this step
                 execution_context = ExecutionContext(
-                    alert=plan.alert,
-                    context=plan.context,
+                    alert=alert,
+                    context=context,
                     accumulated_knowledge=accumulated_knowledge,
                     step_id=f"step_{step_index + 1}",
                     step_description=step.description
@@ -145,7 +150,7 @@ class ExecutionOrchestrator:
                 break
         
         # Generate final summary
-        final_summary = self._generate_execution_summary(plan, executed_steps, success)
+        final_summary = self._generate_execution_summary(alert, context, steps, executed_steps, success)
         
         return ExecutionOrchestratorOutputSchema(
             executed_steps=executed_steps,
@@ -155,9 +160,11 @@ class ExecutionOrchestrator:
         )
     
     def _generate_execution_summary(
-        self, 
-        plan: SimplePlanSchema, 
-        executed_steps: List[StepExecutionResult], 
+        self,
+        alert: str,
+        context: str,
+        steps: list,
+        executed_steps: List[StepExecutionResult],
         success: bool
     ) -> str:
         """Generate a comprehensive execution summary."""
@@ -168,14 +175,14 @@ class ExecutionOrchestrator:
         summary = f"""# Plan Execution Summary
 
 ## Original Alert
-{plan.alert}
+{alert}
 
 ## Context
-{plan.context}
+{context}
 
 ## Execution Results
 - **Status**: {'✅ Success' if success else '❌ Failed'}
-- **Steps Completed**: {len(completed_steps)}/{len(plan.steps)}
+- **Steps Completed**: {len(completed_steps)}/{len(steps)}
 - **Steps Failed**: {len(failed_steps)}
 
 ## Step Details"""
@@ -186,29 +193,32 @@ class ExecutionOrchestrator:
             summary += f"\n   → Tool Used: {step_result.tool_used}"
             summary += f"\n   → Result: {step_result.result_summary}"
         
-        if plan.accumulated_knowledge:
-            summary += f"\n\n## Key Findings\n{plan.accumulated_knowledge}"
-        
         return summary
 
 
 # Example usage
 if __name__ == "__main__":
     from rich.console import Console
-    from datetime import datetime
+    from controllers.planning_agent.atomic_planning_agent import AtomicPlanningOutputSchema
+    from controllers.planning_agent.planner_schemas import PlanStepSchema
     
     console = Console()
     
-    # Example plan for testing
-    test_plan = SimplePlanSchema(
-        alert="Test alert",
-        context="Test context",
+    # Example planning output for testing
+    test_planning_output = AtomicPlanningOutputSchema(
         steps=[
             PlanStepSchema(description="Investigate system status"),
             PlanStepSchema(description="Check error logs"),
             PlanStepSchema(description="Identify root cause")
         ],
-        created_at=datetime.now()
+        reasoning="Standard SRE investigation approach for system alerts"
+    )
+    
+    # Example input
+    test_input = ExecutionOrchestratorInputSchema(
+        alert="Test alert",
+        context="Test context",
+        planning_output=test_planning_output
     )
     
     console.print("[bold blue]Example Execution Orchestrator created[/bold blue]")

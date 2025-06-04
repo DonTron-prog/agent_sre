@@ -132,21 +132,14 @@ assert len(planning_result.steps) >= 3
     console.print("[bold green]2. Schema Chaining:[/bold green]")
     console.print("""
 ```python
-# Planning output automatically matches execution input
-bridge_schema = AtomicPlanningToExecutionSchema(
-    alert=alert,
-    context=context,
-    steps=planning_result.steps,
-    reasoning=planning_result.reasoning
-)
-
-# Convert to execution format
-simple_plan = bridge_schema.to_simple_plan()
-
-# Execute with orchestrator
+# Direct integration - no intermediate schemas needed
 execution_orchestrator = ExecutionOrchestrator(orchestrator_core)
 execution_result = execution_orchestrator.run(
-    ExecutionOrchestratorInputSchema(plan=simple_plan)
+    ExecutionOrchestratorInputSchema(
+        alert=alert,
+        context=context,
+        planning_output=planning_result
+    )
 )
 ```
 """)

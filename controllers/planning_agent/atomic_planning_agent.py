@@ -23,8 +23,8 @@ class AtomicPlanningOutputSchema(BaseIOSchema):
     steps: List[PlanStepSchema] = Field(
         ..., 
         description="Generated plan steps in logical order (3-5 steps)",
-        min_items=3,
-        max_items=5
+        min_items=2,
+        max_items=4
     )
     reasoning: str = Field(..., description="Explanation of the planning approach and rationale")
 

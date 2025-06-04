@@ -23,8 +23,7 @@ from .planner_schemas import (
     PlanStepSchema,
     SimplePlanSchema,
     PlanningAgentInputSchema,
-    PlanningAgentOutputSchema,
-    AtomicPlanningToExecutionSchema
+    PlanningAgentOutputSchema
 )
 
 __all__ = [
@@ -44,6 +43,5 @@ __all__ = [
     'PlanStepSchema',
     'SimplePlanSchema',
     'PlanningAgentInputSchema',
-    'PlanningAgentOutputSchema',
-    'AtomicPlanningToExecutionSchema'
+    'PlanningAgentOutputSchema'
 ]

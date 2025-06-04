@@ -20,8 +20,7 @@ from controllers.planning_agent.execution_orchestrator import (
 )
 from controllers.planning_agent.planner_schemas import (
     PlanningAgentOutputSchema,
-    SimplePlanSchema,
-    AtomicPlanningToExecutionSchema
+    SimplePlanSchema
 )
 
 
@@ -91,16 +90,6 @@ def process_alert_with_atomic_planning(alert: str, context: str = "", model: str
         for i, step in enumerate(planning_result.steps, 1):
             console.print(f"  {i}. {step.description}")
         
-        # Step 3: Convert planning output to execution input
-        bridge_schema = AtomicPlanningToExecutionSchema(
-            alert=alert,
-            context=context,
-            steps=planning_result.steps,
-            reasoning=planning_result.reasoning
-        )
-        
-        simple_plan = bridge_schema.to_simple_plan()
-        
         console.print(Panel(
             "[bold blue]🚀 Execution Phase[/bold blue]\n"
             "Executing plan using orchestration engine...",
@@ -108,13 +97,17 @@ def process_alert_with_atomic_planning(alert: str, context: str = "", model: str
             border_style="blue"
         ))
         
-        # Step 4: Execute plan using execution orchestrator
+        # Step 3: Execute plan using execution orchestrator with direct integration
         execution_orchestrator = ExecutionOrchestrator(orchestrator_core)
-        execution_input = ExecutionOrchestratorInputSchema(plan=simple_plan)
+        execution_input = ExecutionOrchestratorInputSchema(
+            alert=alert,
+            context=context,
+            planning_output=planning_result
+        )
         
         execution_result = execution_orchestrator.run(execution_input)
         
-        # Step 5: Generate final summary
+        # Step 4: Generate final summary
         final_summary = f"""# Atomic Planning Agent Execution Summary
 
 ## Planning Phase
@@ -132,13 +125,19 @@ def process_alert_with_atomic_planning(alert: str, context: str = "", model: str
 {execution_result.accumulated_knowledge}
 """
         
+        # Create a simple plan for the final result with execution results
+        simple_plan = SimplePlanSchema(
+            alert=alert,
+            context=context,
+            steps=planning_result.steps,
+            accumulated_knowledge=execution_result.accumulated_knowledge
+        )
+        
         # Update the simple plan with execution results
         for i, step_result in enumerate(execution_result.executed_steps):
             if i < len(simple_plan.steps):
                 simple_plan.steps[i].status = step_result.status
                 simple_plan.steps[i].result = step_result.full_result
-        
-        simple_plan.accumulated_knowledge = execution_result.accumulated_knowledge
         
         return PlanningAgentOutputSchema(
             plan=simple_plan,
