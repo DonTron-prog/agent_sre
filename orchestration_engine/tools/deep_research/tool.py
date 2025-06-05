@@ -3,16 +3,16 @@ from pydantic import Field
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
-from orchestration_agent.agents.query_agent import QueryAgentInputSchema, query_agent
-from orchestration_agent.agents.qa_agent import (
+from orchestration_engine.agents.query_agent import QueryAgentInputSchema, query_agent
+from orchestration_engine.agents.qa_agent import (
     QuestionAnsweringAgentInputSchema,
     question_answering_agent,
     QuestionAnsweringAgentOutputSchema,
 )
-from orchestration_agent.agents.choice_agent import choice_agent, ChoiceAgentInputSchema
-from orchestration_agent.tools.searxng_search import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolInputSchema
-from orchestration_agent.tools.webpage_scraper import WebpageScraperTool, WebpageScraperToolInputSchema
-from orchestration_agent.tools.deep_research.deepresearch_context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
+from orchestration_engine.agents.choice_agent import choice_agent, ChoiceAgentInputSchema
+from orchestration_engine.tools.searxng_search import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolInputSchema
+from orchestration_engine.tools.webpage_scraper import WebpageScraperTool, WebpageScraperToolInputSchema
+from orchestration_engine.tools.deep_research.deepresearch_context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
 
 
 class DeepResearchToolInputSchema(BaseIOSchema):
@@ -83,8 +83,12 @@ class DeepResearchTool(BaseTool):
         )
         return query_agent_output.queries
     
-    def _perform_search_and_scrape(self, queries: List[str], max_results: int) -> List[ContentItem]:
-        """Perform web search and scrape content from results."""
+    def _perform_search_and_scrape(self, queries: List[str], max_results: int) -> tuple[List[ContentItem], bool]:
+        """Perform web search and scrape content from results.
+        
+        Returns:
+            tuple: (content_items, hit_token_limit)
+        """
         # Perform the search
         search_results = self.searxng_tool.run(SearxNGSearchToolInputSchema(queries=queries))
         
@@ -93,6 +97,7 @@ class DeepResearchTool(BaseTool):
         MAX_TOTAL_CHARS = 380000  # ~95,000 tokens (leaving buffer for system prompt)
         current_char_count = 0
         results_processed = 0
+        hit_token_limit = False
         
         for result in search_results.results:
             # Check if we've hit either limit
@@ -135,7 +140,7 @@ class DeepResearchTool(BaseTool):
                 continue
         
         print(f"Processed {results_processed} results, total chars: {current_char_count} (~{current_char_count//4} tokens)")
-        return content_items
+        return content_items, hit_token_limit
     
     
     def _should_perform_additional_search(self, research_query: str, content_items: List[ContentItem]) -> bool:
@@ -184,21 +189,24 @@ class DeepResearchTool(BaseTool):
         search_queries = self._generate_search_queries(research_query)
         
         # Perform search and scrape content
-        content_items = self._perform_search_and_scrape(search_queries, max_results)
-        
-        # Update context provider with new content
-        self.scraped_content_context_provider.content_items = content_items
+        content_items, hit_token_limit = self._perform_search_and_scrape(search_queries, max_results)
         
         # Check if we need additional searches based on content quality
-        if self._should_perform_additional_search(research_query, content_items):
+        # Skip additional search if we already hit the token limit
+        # NOTE: Don't update context provider yet to avoid token overflow in choice agent
+        if not hit_token_limit and len(content_items) > 0 and self._should_perform_additional_search(research_query, content_items):
             # Generate additional search queries for more comprehensive coverage
             additional_queries = self._generate_search_queries(research_query, num_queries=2)
-            additional_content = self._perform_search_and_scrape(additional_queries, max_results // 2)
+            additional_content, _ = self._perform_search_and_scrape(additional_queries, max_results // 2)
             
             # Combine content items
             content_items.extend(additional_content)
-            self.scraped_content_context_provider.content_items = content_items
             search_queries.extend(additional_queries)
+        elif hit_token_limit:
+            print("Skipping additional search due to token limit reached in initial search")
+        
+        # Update context provider with final content (after all searches are complete)
+        self.scraped_content_context_provider.content_items = content_items
         
         sources = [item.url for item in content_items]
         

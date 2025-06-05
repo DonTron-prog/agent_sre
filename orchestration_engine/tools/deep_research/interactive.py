@@ -2,7 +2,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich import box
-from orchestration_agent.tools.deep_research.utils import perform_deep_research, display_research_results
+from orchestration_engine.tools.deep_research.utils import perform_deep_research, display_research_results
 
 
 console = Console()

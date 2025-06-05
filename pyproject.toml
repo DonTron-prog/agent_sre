@@ -1,9 +1,10 @@
 [tool.poetry]
-name = "orchestration-agent"
+name = "orchestration_engine"
 version = "0.1.0"
 description = ""
 authors = ["KennyVaneetvelde <kenny@inosta.be>"]
 readme = "README.md"
+packages = [{include = "orchestration_engine"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"

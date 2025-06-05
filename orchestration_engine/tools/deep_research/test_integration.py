@@ -10,7 +10,7 @@ import os
 # Add the parent directories to the path so we can import the modules
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
-from orchestration_agent.tools.deep_research import (
+from orchestration_engine.tools.deep_research import (
     DeepResearchTool,
     DeepResearchToolConfig,
     DeepResearchToolInputSchema,
